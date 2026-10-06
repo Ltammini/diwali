@@ -1,0 +1,20 @@
+{
+  "name": "SBCF Diwali Registration 2026",
+  "short_name": "SBCF Diwali",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fffaf4",
+  "theme_color": "#0b1b78",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
