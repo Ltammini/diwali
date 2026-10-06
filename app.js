@@ -38,7 +38,7 @@ qsa("[data-next]").forEach(btn=>btn.addEventListener("click",()=>{
 }));
 qsa("[data-back]").forEach(btn=>btn.addEventListener("click",()=>showStep(Number(btn.dataset.back))));
 
-function validateContact(){for(const id of ["fullName","email","phone"]){if(!$(id).reportValidity())return false;}return true;}
+function validateContact(){for(const id of ["fullName","email"]){if(!$(id).reportValidity())return false;}return true;}
 function validateParticipants(){saveParticipantCache();for(const el of qsa(".participant-name")){if(!el.value.trim()){el.setCustomValidity("Please enter a participant name.");el.reportValidity();el.setCustomValidity("");return false;}}return true;}
 
 qsa("[data-counter]").forEach(btn=>btn.addEventListener("click",()=>{
@@ -78,7 +78,7 @@ function renderSummary(){
   $("summary").innerHTML=`
     <div class="summary-row"><span>Primary contact</span><strong>${escapeHtml($("fullName").value)}</strong></div>
     <div class="summary-row"><span>Email</span><strong>${escapeHtml($("email").value)}</strong></div>
-    <div class="summary-row"><span>Phone</span><strong>${escapeHtml($("phone").value)}</strong></div>
+    <div class="summary-row"><span>Phone</span><strong>${escapeHtml($("phone").value.trim() || "Not provided")}</strong></div>
     <div class="summary-row"><span>Total attendees</span><strong>${totalAttendees()}</strong></div>
     <div class="summary-row"><span>Categories</span><strong>${state.regular12plus} × 12+ · ${state.students} × student · ${state.under12} × below 12</strong></div>
     <div class="summary-row"><span>Participants</span><strong>${participants.map(p=>`${escapeHtml(p.name)} (${escapeHtml(p.type)})`).join(", ")}</strong></div>
@@ -94,24 +94,94 @@ function buildCalendarUrl(){
 }
 function qrUrl(registrationId){return `https://quickchart.io/qr?size=220&margin=2&text=${encodeURIComponent(`SBCF:${registrationId}`)}`;}
 
-$("registrationForm").addEventListener("submit",async e=>{
+function showRegistrationSuccess(result, payload) {
+  localStorage.removeItem("sbcfPendingRequestId");
+
+  qsa(".form-step").forEach(x => x.classList.remove("active"));
+  document.querySelector(".stepper").hidden = true;
+  $("registrationForm").hidden = true;
+
+  $("registrationId").textContent = result.registrationId;
+  $("ticketQr").src = qrUrl(result.registrationId);
+
+  if (cfg.calendarEnabled) $("calendarLink").href = buildCalendarUrl();
+
+  $("successText").textContent = result.emailSent
+    ? `Registration confirmed. A confirmation email and QR ticket were sent to ${payload.email}.`
+    : "Registration confirmed. Please keep the registration ID below. The confirmation email may still be processing.";
+
+  $("success").hidden = false;
+  $("success").scrollIntoView({ behavior:"smooth", block:"center" });
+}
+
+$("registrationForm").addEventListener("submit", async e => {
   e.preventDefault();
-  if(!$("consent").checked){$("consent").reportValidity();return;}
+
+  if (!$("consent").checked) {
+    $("consent").reportValidity();
+    return;
+  }
+
   saveParticipantCache();
-  const button=$("submitButton"),msg=$("submitMessage");
-  button.disabled=true;button.textContent="Submitting…";msg.textContent="";msg.className="message";
-  const clientRequestId=localStorage.getItem("sbcfPendingRequestId")||makeRequestId();
-  localStorage.setItem("sbcfPendingRequestId",clientRequestId);
-  const payload={clientRequestId,eventName:cfg.eventName,fullName:$("fullName").value.trim(),email:$("email").value.trim(),phone:$("phone").value.trim(),regular12plus:state.regular12plus,under12:state.under12,students:state.students,totalAttendees:totalAttendees(),contributionAmount:contributionAmount(),currency:cfg.currency,participants:getParticipants(),activities:getActivities(),notes:$("notes").value.trim(),consent:true,website:$("website").value.trim(),sourceUrl:location.href};
-  try{
-    const result=await backendRequest("register",payload,30000);
-    localStorage.removeItem("sbcfPendingRequestId");
-    qsa(".form-step").forEach(x=>x.classList.remove("active"));document.querySelector(".stepper").hidden=true;$("registrationForm").hidden=true;
-    $("registrationId").textContent=result.registrationId;$("ticketQr").src=qrUrl(result.registrationId);
-    if(cfg.calendarEnabled)$("calendarLink").href=buildCalendarUrl();
-    $("successText").textContent=result.emailSent?`A confirmation email and QR ticket were sent to ${payload.email}.`:`Registration saved. Keep the registration ID below; the confirmation email could not be sent.`;
-    $("success").hidden=false;$("success").scrollIntoView({behavior:"smooth",block:"center"});
-  }catch(err){msg.textContent=err.message;msg.className="message error";button.disabled=false;button.textContent="Confirm registration";}
+
+  const button = $("submitButton");
+  const msg = $("submitMessage");
+  button.disabled = true;
+  button.textContent = "Submitting…";
+  msg.textContent = "";
+  msg.className = "message";
+
+  const clientRequestId =
+    localStorage.getItem("sbcfPendingRequestId") || makeRequestId();
+
+  localStorage.setItem("sbcfPendingRequestId", clientRequestId);
+
+  const payload = {
+    clientRequestId,
+    eventName: cfg.eventName,
+    fullName: $("fullName").value.trim(),
+    email: $("email").value.trim(),
+    phone: $("phone").value.trim(),
+    regular12plus: state.regular12plus,
+    under12: state.under12,
+    students: state.students,
+    totalAttendees: totalAttendees(),
+    contributionAmount: contributionAmount(),
+    currency: cfg.currency,
+    participants: getParticipants(),
+    activities: getActivities(),
+    notes: $("notes").value.trim(),
+    consent: true,
+    website: $("website").value.trim(),
+    sourceUrl: location.href
+  };
+
+  try {
+    const result = await backendRequest("register", payload, 60000);
+    showRegistrationSuccess(result, payload);
+  } catch (err) {
+    // The server may already have saved the registration and sent the email
+    // even if the browser did not receive the Apps Script response.
+    try {
+      msg.textContent = "Checking whether your registration was completed…";
+      msg.className = "message";
+
+      const recovered = await recoverRegistration(clientRequestId);
+
+      if (recovered?.found && recovered.registrationId) {
+        showRegistrationSuccess(recovered, payload);
+        return;
+      }
+    } catch (recoveryError) {
+      console.warn("Registration recovery check failed:", recoveryError);
+    }
+
+    msg.textContent =
+      "We could not confirm the registration response. Please check your email before submitting again. If no confirmation arrives, try once more.";
+    msg.className = "message error";
+    button.disabled = false;
+    button.textContent = "Confirm registration";
+  }
 });
 
 initBrand();

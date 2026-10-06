@@ -21,7 +21,7 @@ This build is already configured with the approved registration categories:
 ```js
 feeRegular12Plus: 20,  // Age 12+
 feeUnder12: 0,        // Below 12 — free
-feeStudent: 18,       // Student rate
+feeStudent: 15,       // Student rate
 ```
 
 The same amounts are calculated again in `Code.gs`, so the Google Apps Script backend remains the source of truth even if someone modifies browser-side JavaScript. Students should carry a valid student ID if the event team requires verification.
@@ -184,10 +184,28 @@ The final build is configured for:
 
 - Age 12+ — **€20**
 - Below 12 — **Free**
-- Students — **€18**
+- Students — **€15**
 
 These prices are validated/calculated by the Google Apps Script backend as well as displayed in the browser. Do not rely only on frontend values.
 
 ### If you used an older test sheet
 
 This build changed the attendee columns. Before production, use a fresh `Registrations` sheet (or clear old test rows and rerun `setupSheet()`) so the columns are: **Age 12+**, **Below 12**, and **Students**.
+
+
+## IMPORTANT — replace the deployed Apps Script version
+
+The timeout fix requires the new `Code.gs`, not only the new frontend.
+
+After pasting this version of `Code.gs` into Apps Script:
+
+1. Save it.
+2. Run `setupSheet()` if necessary.
+3. Go to **Deploy → Manage deployments**.
+4. Edit your Web App deployment.
+5. Select **New version**.
+6. Deploy.
+7. Keep/copy the `/exec` URL into `config.js`.
+8. Redeploy the frontend to Cloudflare.
+
+If the old Apps Script deployment is still active, the browser can continue showing the old timeout behavior.

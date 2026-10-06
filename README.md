@@ -46,10 +46,27 @@ Start with **DEPLOYMENT.md**.
 
 - **Age 12+** — €20 per person
 - **Below 12** — Free
-- **Students** — €18 per person (valid student ID may be requested)
+- **Students** — €15 per person (valid student ID may be requested)
 
 The public form, confirmation email, Google Sheet columns, CSV export and organizer dashboard all use these same categories.
 
 ## Image quality
 
 The site now uses the original high-resolution SBCF logo converted to PNG and vector SVG interface icons, avoiding blurry emoji/raster UI icons.
+
+
+## v3 timeout fix
+
+This version intentionally has **no payment page and no Mollie integration**.
+
+Changes:
+- Student contribution is **€15**
+- Age 12+ remains **€20**
+- Below 12 remains **free**
+- Phone number is **optional**
+- Fixed the false frontend timeout seen when the Sheet row and email were created successfully
+- Apps Script now posts its result to the top-level page as well as its parent frame
+- Browser response matching now uses the random request ID instead of assuming Apps Script runs directly in the target iframe
+- If the browser still misses the first response, it checks the Google Sheet by the same `clientRequestId` and shows the existing registration instead of creating a duplicate
+
+When updating `Code.gs`, deploy a **new Apps Script version** before testing.
