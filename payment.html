@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1b78">
+  <title>SBCF — Payment status</title>
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin-page">
+  <div class="brand-stripe"><span></span><span></span><span></span></div>
+  <header class="admin-header">
+    <div class="wrap admin-head-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/sbcf-logo.png" alt="SBCF logo">
+        <span class="brand-copy"><strong>Stichting Bharat Culture Friesland</strong><small>PAYMENT & REGISTRATION</small></span>
+      </a>
+    </div>
+  </header>
+
+  <main class="wrap payment-main">
+    <section class="card payment-status-card">
+      <div id="paymentSpinner" class="payment-spinner" aria-hidden="true"></div>
+      <span class="eyebrow dark" id="paymentEyebrow">CHECKING PAYMENT</span>
+      <h1 id="paymentTitle">Checking your payment…</h1>
+      <p id="paymentMessage">Please keep this page open while we confirm the payment with Mollie.</p>
+
+      <div id="paymentDetails" class="payment-result" hidden>
+        <div><small>Registration ID</small><strong id="paymentRegistrationId">—</strong></div>
+        <div><small>Amount</small><strong id="paymentAmount">—</strong></div>
+        <div><small>Payment status</small><strong id="paymentStatusText">—</strong></div>
+      </div>
+
+      <div id="paymentTicket" class="ticket payment-ticket" hidden>
+        <div><small>Registration ID</small><strong id="ticketRegistrationId">—</strong><p>Show this QR ticket at the entrance.</p></div>
+        <img id="paymentTicketQr" alt="Registration QR ticket" width="180" height="180">
+      </div>
+
+      <div id="paymentActions" class="success-actions">
+        <button id="retryPaymentButton" class="button primary" type="button" hidden>Try payment again</button>
+        <a class="button secondary" href="index.html">Back to event page</a>
+      </div>
+
+      <div id="paymentError" class="message error" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="backend.js"></script>
+  <script src="payment.js"></script>
+</body>
+</html>

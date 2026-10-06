@@ -38,21 +38,53 @@ qsa("[data-next]").forEach(btn=>btn.addEventListener("click",()=>{
 }));
 qsa("[data-back]").forEach(btn=>btn.addEventListener("click",()=>showStep(Number(btn.dataset.back))));
 
-function validateContact(){for(const id of ["fullName","email","phone"]){if(!$(id).reportValidity())return false;}return true;}
-function validateParticipants(){saveParticipantCache();for(const el of qsa(".participant-name")){if(!el.value.trim()){el.setCustomValidity("Please enter a participant name.");el.reportValidity();el.setCustomValidity("");return false;}}return true;}
+function validateContact(){
+  for(const id of ["fullName","email"]){
+    if(!$(id).reportValidity())return false;
+  }
+  return true;
+}
+
+function validateParticipants(){
+  saveParticipantCache();
+  for(const el of qsa(".participant-name")){
+    if(!el.value.trim()){
+      el.setCustomValidity("Please enter a participant name.");
+      el.reportValidity();
+      el.setCustomValidity("");
+      return false;
+    }
+  }
+  return true;
+}
 
 qsa("[data-counter]").forEach(btn=>btn.addEventListener("click",()=>{
   saveParticipantCache();
   const key=btn.dataset.counter,delta=Number(btn.dataset.delta);
   if(delta>0&&totalAttendees()>=cfg.maxAttendeesPerRegistration)return;
   state[key]=Math.max(0,state[key]+delta);
-  if(totalAttendees()<1)state.regular12plus=1;
+  if(totalAttendees()<1)state.under12=1;
   $(`${key}Count`).textContent=state[key];
   $("regular12plusCount").textContent=state.regular12plus;
+  $("under12Count").textContent=state.under12;
+  $("studentsCount").textContent=state.students;
   updateContribution();
 }));
 
-function updateContribution(){$("contributionPreview").textContent=currency(contributionAmount());}
+function updateContribution(){
+  const amount=contributionAmount();
+  $("contributionPreview").textContent=currency(amount);
+  const button=$("submitButton");
+  const note=$("paymentNoteText");
+  if(button){
+    button.textContent=amount>0?`Pay ${currency(amount)} & complete registration`:"Complete free registration";
+  }
+  if(note){
+    note.textContent=amount>0
+      ?`You will be redirected to Mollie's secure checkout to pay ${currency(amount)}. SBCF does not receive your bank or card details.`
+      :"No payment is required for this registration. Confirmation will be sent immediately.";
+  }
+}
 
 function saveParticipantCache(){
   const rows=qsa(".participant-row");
@@ -75,15 +107,17 @@ function escapeAttr(v){return escapeHtml(v);}
 function renderSummary(){
   saveParticipantCache();
   const acts=getActivities(),participants=getParticipants();
+  const phone=$("phone").value.trim()||"Not provided";
   $("summary").innerHTML=`
     <div class="summary-row"><span>Primary contact</span><strong>${escapeHtml($("fullName").value)}</strong></div>
     <div class="summary-row"><span>Email</span><strong>${escapeHtml($("email").value)}</strong></div>
-    <div class="summary-row"><span>Phone</span><strong>${escapeHtml($("phone").value)}</strong></div>
+    <div class="summary-row"><span>Phone</span><strong>${escapeHtml(phone)}</strong></div>
     <div class="summary-row"><span>Total attendees</span><strong>${totalAttendees()}</strong></div>
     <div class="summary-row"><span>Categories</span><strong>${state.regular12plus} × 12+ · ${state.students} × student · ${state.under12} × below 12</strong></div>
     <div class="summary-row"><span>Participants</span><strong>${participants.map(p=>`${escapeHtml(p.name)} (${escapeHtml(p.type)})`).join(", ")}</strong></div>
     <div class="summary-row"><span>Activities</span><strong>${acts.length?acts.map(escapeHtml).join(", "):"Just attending"}</strong></div>
     <div class="summary-row highlight"><span>Total contribution</span><strong>${currency(contributionAmount())}</strong></div>`;
+  updateContribution();
 }
 
 function buildCalendarUrl(){
@@ -98,20 +132,65 @@ $("registrationForm").addEventListener("submit",async e=>{
   e.preventDefault();
   if(!$("consent").checked){$("consent").reportValidity();return;}
   saveParticipantCache();
+
   const button=$("submitButton"),msg=$("submitMessage");
-  button.disabled=true;button.textContent="Submitting…";msg.textContent="";msg.className="message";
+  button.disabled=true;
+  const amount=contributionAmount();
+  button.textContent=amount>0?"Creating secure payment…":"Completing registration…";
+  msg.textContent="";
+  msg.className="message";
+
   const clientRequestId=localStorage.getItem("sbcfPendingRequestId")||makeRequestId();
   localStorage.setItem("sbcfPendingRequestId",clientRequestId);
-  const payload={clientRequestId,eventName:cfg.eventName,fullName:$("fullName").value.trim(),email:$("email").value.trim(),phone:$("phone").value.trim(),regular12plus:state.regular12plus,under12:state.under12,students:state.students,totalAttendees:totalAttendees(),contributionAmount:contributionAmount(),currency:cfg.currency,participants:getParticipants(),activities:getActivities(),notes:$("notes").value.trim(),consent:true,website:$("website").value.trim(),sourceUrl:location.href};
+
+  const payload={
+    clientRequestId,
+    eventName:cfg.eventName,
+    fullName:$("fullName").value.trim(),
+    email:$("email").value.trim(),
+    phone:$("phone").value.trim(),
+    regular12plus:state.regular12plus,
+    under12:state.under12,
+    students:state.students,
+    totalAttendees:totalAttendees(),
+    contributionAmount:amount,
+    currency:cfg.currency,
+    participants:getParticipants(),
+    activities:getActivities(),
+    notes:$("notes").value.trim(),
+    privacyAcknowledged:true,
+    website:$("website").value.trim(),
+    sourceUrl:location.href
+  };
+
   try{
-    const result=await backendRequest("register",payload,30000);
+    const result=await backendRequest("register",payload,45000);
+
+    if(result.paymentRequired&&result.checkoutUrl){
+      localStorage.setItem("sbcfPendingRegistrationId",result.registrationId);
+      location.href=result.checkoutUrl;
+      return;
+    }
+
     localStorage.removeItem("sbcfPendingRequestId");
-    qsa(".form-step").forEach(x=>x.classList.remove("active"));document.querySelector(".stepper").hidden=true;$("registrationForm").hidden=true;
-    $("registrationId").textContent=result.registrationId;$("ticketQr").src=qrUrl(result.registrationId);
+    localStorage.removeItem("sbcfPendingRegistrationId");
+    qsa(".form-step").forEach(x=>x.classList.remove("active"));
+    document.querySelector(".stepper").hidden=true;
+    $("registrationForm").hidden=true;
+    $("registrationId").textContent=result.registrationId;
+    $("ticketQr").src=qrUrl(result.registrationId);
     if(cfg.calendarEnabled)$("calendarLink").href=buildCalendarUrl();
-    $("successText").textContent=result.emailSent?`A confirmation email and QR ticket were sent to ${payload.email}.`:`Registration saved. Keep the registration ID below; the confirmation email could not be sent.`;
-    $("success").hidden=false;$("success").scrollIntoView({behavior:"smooth",block:"center"});
-  }catch(err){msg.textContent=err.message;msg.className="message error";button.disabled=false;button.textContent="Confirm registration";}
+    $("successText").textContent=result.emailSent
+      ?`Registration confirmed. A confirmation email and QR ticket were sent to ${payload.email}.`
+      :"Registration confirmed. Keep the registration ID below; the confirmation email could not be sent.";
+    $("success").hidden=false;
+    $("success").scrollIntoView({behavior:"smooth",block:"center"});
+  }catch(err){
+    msg.textContent=err.message;
+    msg.className="message error";
+    button.disabled=false;
+    updateContribution();
+  }
 });
 
 initBrand();

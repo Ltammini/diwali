@@ -1,55 +1,51 @@
-# SBCF Diwali Celebration 2026 — Registration System
+# SBCF Diwali Celebration 2026 — Registration + Payments
 
-A lightweight event-management system for **Stichting Bharat Culture Friesland (SBCF)**. The public site is static and can be hosted free on Cloudflare Pages. Google Apps Script + Google Sheets provide the backend.
+Production-oriented static event registration app for **Stichting Bharat Culture Friesland (SBCF)**.
 
-## Included features
+## Included
 
-- SBCF branded responsive registration website using the supplied logo
-- Four-step family registration flow
-- Age 12+ / below-12 / student attendee counters
-- Dynamic participant names and age groups
-- Cultural participation: dance, singing, drama/skit, volunteering, kids activity
-- Optional contribution calculation (disabled by default until you confirm the 2026 amount)
-- Google Sheets storage
-- Duplicate-safe registration requests
-- Automatic HTML confirmation email
-- QR ticket in confirmation email and success screen
-- Add-to-Google-Calendar link
-- Optional WhatsApp group button
-- Organizer dashboard with live totals, search and CSV export
-- Resend confirmation email from dashboard
-- Open/close public registration from dashboard
-- QR camera check-in plus manual registration-ID check-in
-- Duplicate check-in detection
-- Basic spam honeypot and server-side validation
-- Privacy notice template
-- PWA manifest / icons
+- SBCF branded responsive registration website
+- High-resolution SBCF logo and vector UI icons
+- Registration categories:
+  - Age 12+ — €20
+  - Below 12 — Free
+  - Students — €18
+- Phone number is optional
+- Server-side price verification
+- Google Sheets registration storage
+- Mollie hosted payment checkout
+- Mollie payment webhook verification
+- Registration stays pending until payment is verified
+- €0 registrations are confirmed without opening a payment
+- Confirmation email after successful payment
+- QR ticket in confirmation
+- Payment return/status page
+- Retry payment after failed/cancelled/expired payments
+- Organizer dashboard with payment state and paid totals
+- CSV export
+- QR/manual event check-in
+- Check-in blocked until registration is confirmed
+- Privacy page
 
-## Files
+## Architecture
 
-- `index.html` — public registration
-- `admin.html` — organizer dashboard
-- `checkin.html` — QR/manual check-in
-- `privacy.html` — privacy notice template
-- `config.js` — public event configuration
-- `backend.js` — browser-to-Apps-Script request bridge
-- `app.js`, `admin.js`, `checkin.js` — page logic
-- `styles.css` — SBCF theme
-- `Code.gs` — Google Apps Script backend
-- `DEPLOYMENT.md` — exact setup and Cloudflare deployment steps
-- `assets/` — supplied SBCF logo and app icons
+Browser / Cloudflare-hosted static site
+→ Google Apps Script
+→ Google Sheet
 
-Start with **DEPLOYMENT.md**.
+For paid registrations:
+Google Apps Script
+→ Mollie Payments API
+→ Mollie hosted checkout
+→ Mollie webhook
+→ Google Apps Script verifies payment with Mollie
+→ Google Sheet marked Confirmed
+→ confirmation email + QR ticket
 
+The Mollie API key is stored only in **Google Apps Script Script Properties**. It is not stored in GitHub or `config.js`.
 
-## Registration categories (current)
+## Start here
 
-- **Age 12+** — €20 per person
-- **Below 12** — Free
-- **Students** — €18 per person (valid student ID may be requested)
+Read `DEPLOYMENT.md`.
 
-The public form, confirmation email, Google Sheet columns, CSV export and organizer dashboard all use these same categories.
-
-## Image quality
-
-The site now uses the original high-resolution SBCF logo converted to PNG and vector SVG interface icons, avoiding blurry emoji/raster UI icons.
+For Mollie-specific setup and test/live migration, also read `MOLLIE_SETUP.md`.

@@ -18,3 +18,20 @@
 @media(max-width:700px){.diya-svg{right:28px;bottom:52px;width:94px;height:94px}.hero-lamp{width:88px;height:88px}.category-card{min-height:auto}.brand-panel img{width:112px;height:112px}}
 
 .participant-category{min-height:47px;display:flex;align-items:center;padding:12px 14px;border:1px solid #dfe3ec;border-radius:12px;background:#f8f9fc;color:var(--navy);font-weight:800}
+
+
+.optional-label{font-weight:600;color:var(--muted);font-size:12px}
+.payment-note{margin-top:16px;padding:14px 16px;border:1px solid #cfd8f4;border-radius:14px;background:#f5f7ff;color:#364152;display:grid;gap:4px;font-size:13px;line-height:1.45}
+.payment-note strong{color:var(--navy)}
+.payment-main{padding:48px 0 80px}
+.payment-status-card{max-width:720px;margin:0 auto;padding:38px;text-align:center}
+.payment-status-card h1{font-family:Georgia,"Times New Roman",serif;color:var(--navy);font-size:38px;margin:9px 0 12px}
+.payment-status-card>p{color:var(--muted);line-height:1.6;max-width:590px;margin:0 auto 20px}
+.payment-spinner{width:52px;height:52px;border:5px solid #e7eaf3;border-top-color:var(--navy);border-radius:50%;margin:0 auto 20px;animation:sbcf-spin .85s linear infinite}
+.payment-result{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}
+.payment-result>div{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fffdf9}
+.payment-result small{display:block;color:var(--muted);font-weight:700;margin-bottom:5px}
+.payment-result strong{color:var(--navy);word-break:break-word}
+.payment-ticket{margin-top:24px}
+@keyframes sbcf-spin{to{transform:rotate(360deg)}}
+@media(max-width:700px){.payment-status-card{padding:24px 18px}.payment-result{grid-template-columns:1fr}.payment-status-card h1{font-size:32px}}

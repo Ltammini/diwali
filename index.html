@@ -37,13 +37,14 @@
     <nav class="nav wrap">
       <a class="brand" href="./" aria-label="SBCF event home">
         <img src="assets/sbcf-logo.png" alt="Stichting Bharat Culture Friesland logo">
-        <span class="brand-copy"><strong>Stichting Bharat Culture Friesland</strong><small>CULTURE • COMMUNITY • CELEBRATION</small></span>
+        <span class="brand-copy"><strong>Stichting Bharat Culture Friesland</strong><small>SBCF • PEOPLE • CULTURE • TOGETHER</small></span>
       </a>
       <button class="button saffron compact" id="heroRegisterButton" type="button">Register now</button>
     </nav>
 
     <div class="hero-grid wrap">
       <div class="hero-copy">
+        <span class="eyebrow">SBCF COMMUNITY CELEBRATION</span>
         <h1>Diwali Celebration <em>2026</em></h1>
         <p>Celebrate light, culture and community together with families from Friesland and beyond.</p>
         <div class="hero-actions">
@@ -94,8 +95,8 @@
               <input id="email" name="email" type="email" autocomplete="email" maxlength="160" required>
             </div>
             <div class="field">
-              <label for="phone">Phone number *</label>
-              <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="50" placeholder="+31 6 12345678" required>
+              <label for="phone">Phone number <span class="optional-label">(optional)</span></label>
+              <input id="phone" name="phone" type="tel" autocomplete="tel" maxlength="50" placeholder="+31 6 12345678">
             </div>
           </div>
 
@@ -148,10 +149,14 @@
         <section class="form-step" data-step-panel="4">
           <div class="section-title"><span class="round-icon"><svg class="ui-icon" aria-hidden="true"><use href="#i-check"></use></svg></span><div><h2>Review & confirm</h2><p>Please check the details before submitting.</p></div></div>
           <div id="summary" class="summary-card"></div>
-          <label class="consent"><input type="checkbox" id="consent" required><span>I confirm the information is correct and agree that SBCF may use these details to manage this event. See the <a href="privacy.html" target="_blank">privacy notice</a>.</span></label>
+          <label class="consent"><input type="checkbox" id="consent" required><span>I confirm the information is correct and I have read the <a href="privacy.html" target="_blank">privacy notice</a>.</span></label>
           <div class="honeypot" aria-hidden="true"><label>Website<input id="website" type="text" tabindex="-1" autocomplete="off"></label></div>
+          <div class="payment-note" id="paymentNote">
+            <strong>Secure payment</strong>
+            <span id="paymentNoteText">Your contribution will be paid securely through Mollie after you continue. SBCF does not receive your bank or card details.</span>
+          </div>
           <div id="submitMessage" class="message" role="status" aria-live="polite"></div>
-          <div class="actions split"><button class="button secondary" type="button" data-back="3">← Back</button><button class="button primary" id="submitButton" type="submit">Confirm registration</button></div>
+          <div class="actions split"><button class="button secondary" type="button" data-back="3">← Back</button><button class="button primary" id="submitButton" type="submit">Pay & complete registration</button></div>
         </section>
       </form>
 

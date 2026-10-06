@@ -2,12 +2,12 @@ window.EVENT_CONFIG = {
   organizerName: "Stichting Bharat Culture Friesland",
   organizerShortName: "SBCF",
   eventName: "Diwali Celebration 2026",
-  eventDateLabel: "21-Nov-2026",
-  eventTimeLabel: "From 17:30 to 22:00",
-  venueName: "Stichting Cultureel Centrum Mahatma Gandhi, Oldegalileën 129, 8922 AC Leeuwarden",
-  venueAddress: "Oldegalileën 129, 8922 AC Leeuwarden",
+  eventDateLabel: "Date to be confirmed",
+  eventTimeLabel: "Time to be confirmed",
+  venueName: "Venue to be confirmed",
+  venueAddress: "",
   contactEmail: "Update organizer email",
-  whatsappUrl: " https://wa.me/31617932114",
+  whatsappUrl: "",
 
   // Registration categories and contribution amounts.
   currency: "EUR",
@@ -25,3 +25,5 @@ window.EVENT_CONFIG = {
 
   maxAttendeesPerRegistration: 30
 };
+
+// Payment secrets are NOT configured here. Mollie is configured in Google Apps Script Script Properties.

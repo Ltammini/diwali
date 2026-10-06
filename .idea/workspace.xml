@@ -2,24 +2,26 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="130c1f92-97dd-4234-badf-21961b695129" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/Code.gs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/DEPLOYMENT.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_headers" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/admin.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/admin.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/icon-192.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/icon-512.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/sbcf-logo.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/checkin.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/checkin.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/config.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/manifest.webmanifest" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/privacy.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Code.gs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DEPLOYMENT.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/_headers" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/icon-192.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/icon-512.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/assets/sbcf-logo.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/checkin.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/checkin.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/diwali.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/manifest.webmanifest" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/privacy.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/sbcf-event.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/styles.css" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

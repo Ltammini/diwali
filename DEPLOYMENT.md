@@ -1,193 +1,279 @@
-# Final deployment guide — GitHub + Cloudflare Pages + Google Sheets
+# SBCF Diwali 2026 — Complete deployment guide
 
-## Part 1 — Update event information
+This version uses:
+- Cloudflare for the public static website
+- Google Apps Script as the backend
+- Google Sheets as the registration database
+- Mollie for payments
+- Google Mail / Apps Script MailApp for confirmation emails
 
-Open `config.js` and update:
-
-- `eventDateLabel`
-- `eventTimeLabel`
-- `venueName`
-- `venueAddress`
-- `contactEmail`
-- optional `whatsappUrl`
-- set `calendarEnabled: true` and fill `calendarStart` / `calendarEnd` only after the final date/time is confirmed
-
-The supplied SBCF logo is already in `assets/sbcf-logo.png` and the theme uses saffron, white, green, navy blue and small red accents based on that identity.
-
-### Registration categories and contributions
-
-This build is already configured with the approved registration categories:
-
-```js
-feeRegular12Plus: 20,  // Age 12+
-feeUnder12: 0,        // Below 12 — free
-feeStudent: 18,       // Student rate
-```
-
-The same amounts are calculated again in `Code.gs`, so the Google Apps Script backend remains the source of truth even if someone modifies browser-side JavaScript. Students should carry a valid student ID if the event team requires verification.
+No Mollie secret is stored in GitHub.
 
 ---
 
-## Part 2 — Create the Google Sheet backend
+## A. Google Sheet
 
-1. Create a blank Google Sheet, for example **SBCF Diwali 2026 Registrations**.
-2. In that Sheet choose **Extensions → Apps Script**.
-3. Delete the sample function.
-4. Copy the complete contents of `Code.gs` into the Apps Script editor.
-5. Update the `SETTINGS` block near the top with the final date, time, venue, reply-to email and WhatsApp URL.
-6. Save.
-7. Select `setupSheet` and click **Run** once.
-8. Approve Google's permissions. The `Registrations` sheet will be created/configured.
+1. Open **Google Sheets**.
+2. Create a blank spreadsheet.
+3. Name it, for example:
+   `SBCF Diwali 2026 Registrations`
+4. In the spreadsheet choose:
+   **Extensions → Apps Script**
+5. Delete the default sample code.
+6. Copy the entire supplied `Code.gs` into the editor.
+7. Save.
 
-### Create the organizer admin key
+### Run setup
 
-Do **not** put the admin password in GitHub.
+1. Select the function `setupSheet`.
+2. Click **Run**.
+3. Approve the permissions requested by Google.
+4. Return to the spreadsheet.
+5. A `Registrations` tab will contain the required columns.
 
-In Apps Script:
-
-1. Open **Project Settings**.
-2. Find **Script Properties**.
-3. Add a property:
-   - Property: `ADMIN_KEY`
-   - Value: a long random password used only by SBCF organizers
-4. Save.
-
-The admin dashboard and check-in page request this key at runtime and store it only in browser session storage.
+If you already used the previous SBCF v2 sheet, the new payment columns are appended to the right.
 
 ---
 
-## Part 3 — Deploy Google Apps Script
+## B. Apps Script properties
 
-1. Apps Script → **Deploy → New deployment**.
-2. Select **Web app**.
-3. Execute as: **Me**.
-4. Who has access: **Anyone**.
-5. Deploy.
-6. Copy the Web App URL ending in `/exec`.
-7. Paste it into `config.js`:
+In Apps Script open:
 
-```js
-googleAppsScriptUrl: "https://script.google.com/macros/s/....../exec"
-```
+**Project Settings → Script Properties**
 
-Whenever you later change `Code.gs`, use **Deploy → Manage deployments → Edit → New version → Deploy**.
+Add:
 
----
+### 1. ADMIN_KEY
 
-## Part 4 — Test locally before publishing
+Property:
+`ADMIN_KEY`
 
-You can double-click `index.html`, but camera scanning normally requires HTTPS. For a better local test, use any small static server.
+Value:
+a long, random organizer-only password.
 
-At minimum test:
+Example format only:
+`SBCF-Admin-2026-CHANGE-THIS-TO-A-LONG-RANDOM-VALUE`
 
-1. Submit one registration.
-2. Confirm a row appears in Google Sheets.
-3. Confirm the email arrives and contains the QR code.
-4. Open `admin.html`, enter the `ADMIN_KEY`, and verify totals.
-5. Open `checkin.html`; manually enter the registration ID and verify it becomes `Checked in`.
-6. After Cloudflare deployment, test the camera QR scanner on a phone.
+Never put this key into GitHub.
 
----
+### 2. MOLLIE_API_KEY
 
-## Part 5 — Push to GitHub
+Start with a Mollie test API key:
 
-Create a new GitHub repository such as:
+Property:
+`MOLLIE_API_KEY`
 
-`SBCF-Diwali-Registration-2026`
+Value:
+`test_...`
 
-Upload all website files **except there are no secrets in this repository**. `Code.gs` is safe to keep in the repo as long as `ADMIN_KEY` remains only in Apps Script Script Properties.
+After successful testing, replace it with the live key:
 
-Typical Git commands:
+`live_...`
 
-```bash
-git init
-git add .
-git commit -m "Initial SBCF Diwali registration system"
-git branch -M main
-git remote add origin YOUR_GITHUB_REPOSITORY_URL
-git push -u origin main
-```
+### 3. PUBLIC_SITE_URL
+
+Property:
+`PUBLIC_SITE_URL`
+
+Value:
+your public Cloudflare site origin, without a trailing slash.
+
+For your current deployment this can be:
+
+`https://sbcf-events.laxminarayan-tammini.workers.dev`
+
+If you later attach a custom domain, change this property to the new origin.
 
 ---
 
-## Part 6 — Publish free with Cloudflare Pages
+## C. Deploy Google Apps Script
 
-1. Sign in to Cloudflare.
-2. Open **Workers & Pages**.
-3. Create a new **Pages** project.
-4. Connect your GitHub account and select the SBCF repository.
-5. Framework preset: **None**.
-6. Build command: leave empty.
-7. Build output directory: `/` (repository root).
-8. Deploy.
+1. Apps Script → **Deploy → New deployment**
+2. Type → **Web app**
+3. Description → `SBCF Diwali Registration and Payment API`
+4. Execute as → **Me**
+5. Who has access → **Anyone**
+6. Deploy.
+7. Copy the Web App URL ending in `/exec`.
 
-Cloudflare gives you a URL similar to:
+Example:
 
-`https://sbcf-diwali-2026.pages.dev`
+`https://script.google.com/macros/s/AKfycb.../exec`
 
-Cloudflare provides HTTPS automatically, which is required by modern browsers for the camera QR scanner.
+### Optional but recommended
 
-### Custom domain
+Add this to Script Properties too:
 
-You can later add a domain/subdomain such as:
+Property:
+`WEB_APP_URL`
 
-`diwali.sbcf.nl`
+Value:
+the same `/exec` URL.
 
-from the Pages project's **Custom domains** section.
+This guarantees Mollie receives the correct webhook URL.
 
----
+### Recommended payment reconciliation trigger
 
-## Organizer URLs
+After deployment, return to the Apps Script editor:
 
-After publishing:
+1. Select `setupPaymentReconciliationTrigger`
+2. Click **Run**
+3. Approve the trigger permission if Google asks
 
-- Public registration: `/`
-- Organizer dashboard: `/admin.html`
-- Entrance check-in: `/checkin.html`
-- Privacy notice: `/privacy.html`
+This installs a 5-minute reconciliation job for pending payments. It is a fallback in case a Mollie webhook is missed or temporarily cannot be processed.
 
-Do not publicly advertise the dashboard/check-in URLs unnecessarily. They still require the admin key.
-
----
-
-## QR tickets
-
-The system uses `quickchart.io` to render the QR image. The QR contains only:
-
-`SBCF:<registration-id>`
-
-It does not contain the attendee's email, phone number or admin key. The organizer's check-in page sends the scanned registration ID to Google Apps Script and requires the organizer admin key before changing the Sheet.
+You only need to run `setupPaymentReconciliationTrigger()` once.
 
 ---
 
-## Google email quota
+## D. Configure the website
 
-Confirmation emails are sent using the Google account that owns the Apps Script. Google applies daily Apps Script/MailApp quotas based on account type. For a community-sized event this may be sufficient, but check the applicable quota before opening registrations if you expect a large number of submissions in one day.
+Open `config.js`.
+
+Replace:
+
+`PASTE_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE`
+
+with the Apps Script `/exec` URL.
+
+Also update:
+- event date
+- event time
+- venue
+- organizer email
+- WhatsApp link, if used
+- calendar settings, if used
+
+Do **not** add your Mollie API key to `config.js`.
 
 ---
 
-## Data/privacy checklist before launch
+## E. Upload to GitHub / Cloudflare
 
-Because the Sheet contains personal contact information:
+Upload the complete folder contents, including:
 
-- restrict Sheet sharing to authorized SBCF organizers;
-- verify the privacy notice wording;
-- use a strong `ADMIN_KEY`;
-- do not put the admin key into `config.js`, GitHub or WhatsApp;
-- remove or anonymize event data when SBCF no longer needs it;
-- run an end-to-end test using a non-organizer email before sharing the registration link publicly.
+- `index.html`
+- `payment.html`
+- `privacy.html`
+- `admin.html`
+- `checkin.html`
+- `app.js`
+- `payment.js`
+- `backend.js`
+- `admin.js`
+- `checkin.js`
+- `config.js`
+- `styles.css`
+- `assets/`
+- `manifest.webmanifest`
+- `_headers`
 
+`Code.gs` may stay in the repository as source code, but it does not contain the secrets. The secret values live in Apps Script Script Properties.
 
-## Current pricing / registration categories
+Publish/redeploy the same way you used for your current Cloudflare Worker/static site.
 
-The final build is configured for:
+---
 
-- Age 12+ — **€20**
-- Below 12 — **Free**
-- Students — **€18**
+## F. Payment flow
 
-These prices are validated/calculated by the Google Apps Script backend as well as displayed in the browser. Do not rely only on frontend values.
+For a paid registration:
 
-### If you used an older test sheet
+1. Visitor fills the form.
+2. Google Apps Script validates categories and recalculates the amount.
+3. Registration is stored as `Pending payment`.
+4. Apps Script creates a Mollie payment.
+5. Visitor is sent to Mollie's hosted checkout.
+6. Mollie calls the Apps Script webhook.
+7. Apps Script fetches the payment from Mollie and verifies it.
+8. If Mollie says `paid`:
+   - Payment Status → `paid`
+   - Registration Status → `Confirmed`
+   - Paid At → timestamp
+   - confirmation email + QR ticket are sent
+9. Visitor's `payment.html` page also checks the status and displays confirmation.
 
-This build changed the attendee columns. Before production, use a fresh `Registrations` sheet (or clear old test rows and rerun `setupSheet()`) so the columns are: **Age 12+**, **Below 12**, and **Students**.
+For a €0 registration:
+- Mollie is skipped
+- the registration is confirmed immediately
+- the confirmation email is sent immediately
+
+---
+
+## G. Test checklist
+
+### Free registration
+Use only Below 12 attendees.
+
+Expected:
+- amount €0
+- no Mollie checkout
+- immediate confirmation
+- email sent
+- Status = Confirmed
+- Payment Status = Not required
+
+### Paid registration
+Example:
+- Age 12+: 2 → €40
+- Student: 1 → €18
+- Below 12: 1 → €0
+- Total → €58
+
+Expected:
+- redirect to Mollie
+- confirmation only after successful payment
+- Sheet Payment Status = paid
+- contribution = €58
+- email sent after payment
+- QR check-in works
+
+### Cancelled/failed payment
+Expected:
+- no confirmation email
+- registration remains unconfirmed
+- check-in is blocked
+- payment return page offers Try payment again
+
+### Optional phone
+Leave phone blank.
+
+Expected:
+- registration proceeds normally
+- Google Sheet phone cell is blank
+- confirmation email still works
+
+---
+
+## H. Admin pages
+
+Dashboard:
+
+`/admin.html`
+
+Check-in:
+
+`/checkin.html`
+
+Both use the `ADMIN_KEY` from Apps Script Script Properties.
+
+The admin dashboard now displays:
+- paid contribution total
+- pending payment count
+- per-registration payment status
+- payment method
+- paid timestamp
+
+Only confirmed registrations can be checked in.
+
+---
+
+## I. Updating Apps Script later
+
+After changing `Code.gs`:
+
+1. **Deploy → Manage deployments**
+2. Edit your deployment
+3. Choose **New version**
+4. Deploy
+
+Keep the `/exec` URL in `config.js` and `WEB_APP_URL` up to date if Google gives you a different URL.
