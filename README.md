@@ -70,3 +70,28 @@ Changes:
 - If the browser still misses the first response, it checks the Google Sheet by the same `clientRequestId` and shows the existing registration instead of creating a duplicate
 
 When updating `Code.gs`, deploy a **new Apps Script version** before testing.
+
+
+## v4 — Apps Script iframe response fix
+
+The previous false-timeout was traced to Google Apps Script's default iframe protection.
+
+The frontend submits to Apps Script using a hidden iframe. `HtmlService` responses are not frameable cross-origin by default, so the backend successfully wrote to Google Sheets and sent the email, but the Cloudflare page could not execute the response page and therefore never received `postMessage()`.
+
+`Code.gs` now returns the response using:
+
+```javascript
+.setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+```
+
+The response contains only the request result and remains correlated to the browser's random `requestId`.
+
+A `backend-test.html` page is also included. After deployment, open:
+
+`/backend-test.html`
+
+and click **Test connection**. You should see:
+
+`Success: browser received the Apps Script response.`
+
+This test does not create a registration.

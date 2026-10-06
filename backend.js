@@ -86,7 +86,7 @@ function backendRequest(action, payload = {}, timeoutMs = 45000) {
       done = true;
       cleanup();
 
-      const err = new Error("The request timed out.");
+      const err = new Error("The browser did not receive the Google Apps Script response in time. Make sure the latest Code.gs Web App version is deployed.");
       err.code = "SBCF_TIMEOUT";
       reject(err);
     }, timeoutMs);

@@ -209,3 +209,48 @@ After pasting this version of `Code.gs` into Apps Script:
 8. Redeploy the frontend to Cloudflare.
 
 If the old Apps Script deployment is still active, the browser can continue showing the old timeout behavior.
+
+
+## v4 connection test — do this before another registration
+
+This version fixes Google Apps Script iframe blocking.
+
+### 1. Replace `Code.gs`
+
+Paste the new `Code.gs` into your existing Apps Script project.
+
+### 2. Deploy a NEW Web App version
+
+This step is mandatory:
+
+1. **Deploy → Manage deployments**
+2. Select the existing Web App deployment
+3. Click **Edit**
+4. Under Version choose **New version**
+5. Click **Deploy**
+
+Simply clicking Save in Apps Script is not enough.
+
+### 3. Verify `config.js`
+
+Make sure `googleAppsScriptUrl` still points to the deployed `/exec` URL.
+
+### 4. Deploy the new frontend to Cloudflare
+
+Push/upload all new frontend files.
+
+### 5. Test browser ↔ Apps Script response
+
+Open:
+
+`https://YOUR-CLOUDFLARE-URL/backend-test.html`
+
+Click **Test connection**.
+
+Expected:
+
+`Success: browser received the Apps Script response.`
+
+Only after this succeeds, test a real registration.
+
+If the diagnostic page still times out, the most common cause is that the old Apps Script deployment is still serving the `/exec` URL.
