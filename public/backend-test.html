@@ -11,7 +11,7 @@
   <main class="wrap" style="padding-top:48px;max-width:760px">
     <section class="card" style="padding:28px">
       <h1 style="margin-top:0">SBCF backend connection test</h1>
-      <p>This page tests only the browser ↔ Google Apps Script response. It does not create a registration.</p>
+      <p>This page tests Browser → Cloudflare Worker → Google Apps Script. It does not create a registration.</p>
       <button class="button primary" id="testButton" type="button">Test connection</button>
       <div id="result" class="message" style="margin-top:18px"></div>
     </section>
@@ -26,7 +26,7 @@
       try {
         const r = await backendRequest("ping", {}, 15000);
         result.className = "message success";
-        result.textContent = "Success: browser received the Apps Script response.";
+        result.textContent = "Success: Cloudflare reached Google Apps Script and returned the response.";
       } catch (e) {
         result.className = "message error";
         result.textContent = "Failed: " + e.message;

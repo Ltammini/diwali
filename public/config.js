@@ -21,7 +21,8 @@ window.EVENT_CONFIG = {
   calendarEnd: "",
 
   // Required after deploying Code.gs from Google Apps Script.
-  googleAppsScriptUrl: "https://script.google.com/macros/s/AKfycbzJDB9ZkYqlKoeiOPlBS4EWT_xFEE-mnbwR1R1rpEIZhKIk-yOWJtE3tJpunRcIFz36/exec",
 
   maxAttendeesPerRegistration: 30
 };
+
+// Google Apps Script is now configured server-side in Cloudflare as APPS_SCRIPT_URL.
