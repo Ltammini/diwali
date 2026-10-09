@@ -212,29 +212,34 @@ function resendEmail_(registrationId){
 function markPaymentPaid_(payload){
   const registrationId=String(payload.registrationId||"").trim().toUpperCase();
   if(!registrationId)throw new Error("Registration ID is required.");
-  const sh=sheet_();
-  ensureHeaders_(sh);
-  const row=findRowById_(sh,registrationId);
-  if(!row)throw new Error("Registration not found.");
-  const current=rowObject_(sh,row);
-  const expected=money_(current.contribution);
-  if(expected<=0)return{registrationId,paymentStatus:"FREE",alreadyPaid:true};
+  const lock=LockService.getScriptLock();
+  lock.waitLock(20000);
+  try{
+    const sh=sheet_();
+    ensureHeaders_(sh);
+    const row=findRowById_(sh,registrationId);
+    if(!row)throw new Error("Registration not found.");
+    const current=rowObject_(sh,row);
+    const expected=money_(current.contribution);
+    if(expected<=0)return{registrationId,paymentStatus:"FREE",alreadyPaid:true,ticketEmailSent:current.ticketEmailStatus==="Sent"};
 
-  const received=payload.amountReceived===""||payload.amountReceived==null?expected:money_(payload.amountReceived);
-  if(Math.abs(received-expected)>0.009&&!payload.confirmDifference){
-    throw new Error(`Amount received (€${received.toFixed(2)}) does not match amount due (€${expected.toFixed(2)}). Confirm the difference before marking as paid.`);
+    const received=payload.amountReceived===""||payload.amountReceived==null?expected:money_(payload.amountReceived);
+    if(Math.abs(received-expected)>0.009&&!payload.confirmDifference){
+      throw new Error(`Amount received (€${received.toFixed(2)}) does not match amount due (€${expected.toFixed(2)}). Confirm the difference before marking as paid.`);
+    }
+
+    const result=verifyPaymentRow_(sh,row,{
+      amountReceived:received,
+      verification:"Manual",
+      transactionId:clean_(payload.transactionId,160),
+      transactionDate:clean_(payload.transactionDate,80),
+      note:clean_(payload.note||"Manually verified against the ING bank account by an organizer.",500)
+    });
+    return Object.assign({registrationId},result);
+  }finally{
+    lock.releaseLock();
   }
-
-  const result=verifyPaymentRow_(sh,row,{
-    amountReceived:received,
-    verification:"Manual",
-    transactionId:clean_(payload.transactionId,160),
-    transactionDate:clean_(payload.transactionDate,80),
-    note:clean_(payload.note||"Manually verified by organizer.",500)
-  });
-  return Object.assign({registrationId},result);
 }
-
 function reconcilePayments_(payload){
   const fileName=clean_(payload.fileName||"ING transaction export",180);
   const content=String(payload.content||"");
