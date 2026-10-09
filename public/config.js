@@ -1,5 +1,5 @@
 window.EVENT_CONFIG = {
-  organizerName: "Stichting Bharat Culture Friesland",
+  organizerName: "Stichting Bharat Cultuur Friesland",
   organizerShortName: "SBCF",
   eventName: "Diwali Celebration 2026",
   eventDateLabel: "Date to be confirmed",
