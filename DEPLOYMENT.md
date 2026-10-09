@@ -1,145 +1,55 @@
-# SBCF v5 deployment — Cloudflare Worker proxy
+# Deployment — SBCF Diwali 2026 manual payment confirmation
 
-This version deliberately does NOT call Google Apps Script directly from the browser.
+**Important:** GitHub/Cloudflare deployment does **not** automatically update Google Apps Script. Deploy both components.
 
-## 1. Update Google Apps Script
+## 1. Confirm Google Apps Script properties
 
-Open your registration Google Sheet:
+Open the existing registration Google Sheet → Extensions → Apps Script → Project Settings → Script Properties.
 
-**Extensions → Apps Script**
+Required:
 
-Replace all existing code with the supplied `Code.gs`.
+- ADMIN_KEY — your existing organizer-only password
+- PAYMENT_IBAN — the real SBCF ING IBAN (example format: NL00INGB0000000000; never use the example value)
 
-Save.
+Optional:
 
-Then deploy a new Web App version:
+- PAYMENT_ACCOUNT_HOLDER — defaults to Stichting Bharat Cultuur Friesland
+- PAYMENT_SITE_URL — defaults to https://diwali.sbcf-friesland.workers.dev
 
-1. **Deploy → Manage deployments**
-2. Select your Web App
-3. Click **Edit**
-4. Version → **New version**
-5. Execute as → **Me**
-6. Who has access → **Anyone**
-7. **Deploy**
+Do not commit actual credentials or the admin key into GitHub.
 
-Copy the URL ending in `/exec`.
+## 2. Deploy Code.gs
 
-You can test that URL directly in a browser. It should display JSON similar to:
+Replace the script code with the new Code.gs from this branch. Save, then go to Deploy → Manage deployments → Edit existing Web App → New version → Deploy.
 
-`{"source":"SBCF_APPS_SCRIPT","ok":true,"service":"SBCF registration service","status":"ready",...}`
+Keep Execute as **Me** and access **Anyone**, as required for the existing Cloudflare proxy architecture. Ensure the Web App deployment URL ends in /exec.
 
-If you do not see that, stop here and fix the Apps Script deployment before changing Cloudflare.
+The script will add the payment columns to the registration sheet on first access. Existing registration data remains in the sheet. **Make a backup copy of the Google Sheet first.** The code's header migration assumes the original sheet columns have not been rearranged.
 
----
+## 3. Merge GitHub changes and deploy Cloudflare
 
-## 2. Push this complete v5 project to GitHub
+Merge this branch into main only after reviewing the changes. Cloudflare will deploy the Worker and static assets from GitHub according to your existing configuration.
 
-The repository root must contain:
+Verify Cloudflare Worker Variables and Secrets contains APPS_SCRIPT_URL set to the current Apps Script /exec deployment. The Worker source is src/index.js, and public/ contains the static pages.
 
-- `wrangler.jsonc`
-- `package.json`
-- `src/`
-- `public/`
-- `Code.gs`
-- `README.md`
-- `DEPLOYMENT.md`
+## 4. Validate the workflow
 
-Do not upload only the `public` folder.
+Use a test email and controlled test registrations, ideally in a test Sheet/deployment before allowing public registrations:
 
----
+1. Open https://diwali.sbcf-friesland.workers.dev/backend-test.html and verify connectivity.
+2. Create a paid test registration. Check that the success page shows **Registration received — payment pending**, amount, actual IBAN, account holder and unique payment reference. There must be **no QR ticket**.
+3. Check the first email: it must contain the bank details and a working link to /payment.html. The payment page must show the same details and not claim to initiate a bank payment.
+4. Log in to /admin.html using ADMIN_KEY. Locate the pending registration and verify the amount and reference. **Only confirm payment after independently checking ING** (or use an isolated test registration that will be removed after testing).
+5. Click **Confirm payment** and accept the confirmation prompt. Check the Google Sheet: Payment Status = PAID, Payment Verification = Manual, Amount Received and Payment Verified At populated.
+6. Check that the final email includes the QR ticket. The admin dashboard should show PAID and QR ticket email Sent. Reconfirming a paid registration must not send a duplicate ticket.
+7. Create a free-only test registration: the page should show its QR immediately, and the backend should send the ticket without payment.
+8. Verify that check-in refuses a PENDING registration.
 
-## 3. Configure Cloudflare APPS_SCRIPT_URL
+If the QR email fails, the payment remains PAID and the admin dashboard offers **Retry ticket email**. The **Resend email** button sends payment instructions for pending registrations or the ticket for paid/free registrations.
 
-Open:
+## Known limitations
 
-**Cloudflare Dashboard → Workers & Pages → sbcf-events → Settings → Variables and Secrets**
-
-Add:
-
-Name:
-`APPS_SCRIPT_URL`
-
-Value:
-your Google Apps Script URL ending in `/exec`
-
-Example:
-
-`https://script.google.com/macros/s/AKfycbXXXXXXXXXXXXXXXX/exec`
-
-This value is used by the Cloudflare Worker. It is no longer exposed in `config.js`.
-
-The included `wrangler.jsonc` has `keep_vars: true`, so a GitHub/Wrangler redeploy preserves dashboard-configured variables such as `APPS_SCRIPT_URL`.
-
----
-
-## 4. Deploy from GitHub / Cloudflare
-
-For a Cloudflare Worker project, use the repository root containing `wrangler.jsonc`.
-
-If Cloudflare asks for commands:
-
-Install command:
-`npm install`
-
-Deploy command:
-`npx wrangler deploy`
-
-No frontend build command is required.
-
-The Wrangler configuration publishes:
-- `src/index.js` as the Worker
-- `public/` as static assets
-
----
-
-## 5. Test the backend before registration
-
-Open:
-
-`https://sbcf-events.laxminarayan-tammini.workers.dev/backend-test.html`
-
-Click **Test connection**.
-
-Expected:
-
-`Success: Cloudflare reached Google Apps Script and returned the response.`
-
-This does not create a registration.
-
-If it fails, the error now comes from the Cloudflare Worker and should identify whether:
-- `APPS_SCRIPT_URL` is missing
-- the URL is not `/exec`
-- Apps Script is not publicly deployed
-- Apps Script returned HTML instead of JSON
-
----
-
-## 6. Test one real registration
-
-Use:
-- Age 12+ — €20
-- Student — €15
-- Below 12 — free
-- phone may be blank
-
-Expected:
-1. Registration is added to Google Sheets.
-2. Confirmation email is sent.
-3. Browser immediately shows the success screen and registration ID.
-4. QR ticket is shown.
-
----
-
-## Why v5 is different
-
-The older versions used:
-
-Browser → hidden iframe → Apps Script → `postMessage`
-
-That path was fragile because Google Apps Script can use redirects, sandboxed HTML and frame restrictions.
-
-v5 uses:
-
-Browser → Cloudflare `/api/backend` → server-to-server fetch → Apps Script JSON
-
-Cloudflare and Apps Script communicate server-to-server, so browser iframe/CORS restrictions are removed from the registration path.
+- The bank transfer is not processed online. The organizer must check the actual incoming ING payment.
+- ING bank statement auto-import is not enabled in the Worker because the draft parser has not been validated against a real sample.
+- There is no staging/live integration test included. Check the workflow before announcing the event.
+- If a request times out after an admin confirmation, refresh the dashboard before retrying to avoid confusion.
