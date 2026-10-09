@@ -101,17 +101,58 @@ function showRegistrationSuccess(result, payload) {
   document.querySelector(".stepper").hidden = true;
   $("registrationForm").hidden = true;
 
+  const payment = result.payment || {};
+  const amountDue = Number(payment.amountDue ?? payload.contributionAmount ?? 0);
+  const status = String(payment.status || (amountDue === 0 ? "FREE" : "PENDING")).toUpperCase();
+  const hasTicket = status === "FREE" || status === "PAID" || status === "LEGACY";
+  const needsPayment = !hasTicket && amountDue > 0;
+
   $("registrationId").textContent = result.registrationId;
-  $("ticketQr").src = qrUrl(result.registrationId);
+  $("paymentPanel").hidden = !needsPayment;
+  $("registrationTicket").hidden = !hasTicket;
+  $("printTicketButton").hidden = !hasTicket;
 
   if (cfg.calendarEnabled) $("calendarLink").href = buildCalendarUrl();
 
-  $("successText").textContent = result.emailSent
-    ? `Registration confirmed. A confirmation email and QR ticket were sent to ${payload.email}.`
-    : "Registration confirmed. Please keep the registration ID below. The confirmation email may still be processing.";
+  if (hasTicket) {
+    $("successEyebrow").textContent = "REGISTRATION CONFIRMED";
+    $("successHeading").textContent = "You're registered!";
+    $("ticketQr").src = qrUrl(result.registrationId);
+    $("successText").textContent = status === "FREE"
+      ? (result.emailSent
+          ? "No payment is required. Your QR admission ticket has been emailed to " + payload.email + "."
+          : "No payment is required. Your QR ticket is shown below; the email may still be processing.")
+      : "Your payment is verified. Your QR admission ticket is shown below and is sent by email.";
+  } else {
+    $("ticketQr").removeAttribute("src");
+    $("successEyebrow").textContent = "REGISTRATION RECEIVED — PAYMENT PENDING";
+    $("successHeading").textContent = "Registration received!";
+    $("successText").textContent = "We have saved your registration. Payment must be verified before your admission ticket is issued.";
+    $("paymentAmount").textContent = currency(amountDue);
+    $("paymentAccountHolder").textContent = payment.accountHolder || cfg.organizerName;
+    $("paymentIban").textContent = payment.iban || "Please refer to your payment email";
+    $("paymentReference").textContent = payment.reference || result.registrationId;
+    $("paymentEmailNote").textContent = result.emailSent
+      ? "We have emailed the payment instructions to " + payload.email + ". Please check your inbox and spam folder."
+      : "We could not confirm that the instructions email was sent. Use the bank details above, or contact the organizer for help.";
+
+    const link = $("paymentLink");
+    link.hidden = true;
+    if (payment.url) {
+      try {
+        const target = new URL(payment.url, window.location.origin);
+        if (target.protocol === "https:" && target.origin === window.location.origin) {
+          link.href = target.href;
+          link.hidden = false;
+        }
+      } catch (_) {
+        // Invalid payment links are not displayed.
+      }
+    }
+  }
 
   $("success").hidden = false;
-  $("success").scrollIntoView({ behavior:"smooth", block:"center" });
+  $("success").scrollIntoView({behavior:"smooth",block:"center"});
 }
 
 $("registrationForm").addEventListener("submit", async e => {
