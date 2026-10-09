@@ -2,11 +2,11 @@ window.EVENT_CONFIG = {
   organizerName: "Stichting Bharat Cultuur Friesland",
   organizerShortName: "SBCF",
   eventName: "Diwali Celebration 2026",
-  eventDateLabel: "Date to be confirmed",
-  eventTimeLabel: "Time to be confirmed",
-  venueName: "Venue to be confirmed",
+  eventDateLabel: "21 Nov 2026",
+  eventTimeLabel: "17:30 to 22:00",
+  venueName: "Stichting Cultureel Centrum Mahatma Gandhi, Oldegalileën 129, 8922 AC Leeuwarden",
   venueAddress: "",
-  contactEmail: "Update organizer email",
+  contactEmail: "sbcf.friesland@gmail.com",
   whatsappUrl: "",
 
   // Registration categories and contribution amounts.
