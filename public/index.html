@@ -36,8 +36,8 @@
   <header class="hero">
     <nav class="nav wrap">
       <a class="brand" href="./" aria-label="SBCF event home">
-        <img src="assets/sbcf-logo.png" alt="Stichting Bharat Culture Friesland logo">
-        <span class="brand-copy"><strong>Stichting Bharat Culture Friesland</strong><small>COMMUNITY • CULTURE • CELEBRATION</small></span>
+        <img src="assets/sbcf-logo.png" alt="Stichting Bharat Cultuur Friesland logo">
+        <span class="brand-copy"><strong>Stichting Bharat Cultuur Friesland</strong><small>COMMUNITY • CULTURE • CELEBRATION</small></span>
       </a>
       <button class="button saffron compact" id="heroRegisterButton" type="button">Register now</button>
     </nav>
@@ -157,17 +157,37 @@
 
       <section id="success" class="success" hidden>
         <div class="success-mark">✓</div>
-        <span class="eyebrow dark">REGISTRATION CONFIRMED</span>
-        <h2>You're registered!</h2>
-        <p id="successText">Your registration has been saved.</p>
-        <div class="ticket">
-          <div><small>Registration ID</small><strong id="registrationId">—</strong><p>Show this QR ticket at the entrance.</p></div>
+        <span id="successEyebrow" class="eyebrow dark">REGISTRATION RECEIVED</span>
+        <h2 id="successHeading">Registration received!</h2>
+        <p id="successText" role="status" aria-live="polite">Your registration has been saved.</p>
+        <div class="registration-id-box">
+          <small>YOUR REGISTRATION ID</small>
+          <strong id="registrationId">—</strong>
+        </div>
+
+        <div id="paymentPanel" class="payment-panel" hidden>
+          <h3>Complete your bank transfer</h3>
+          <p>We will send payment instructions to your email address. You can also use the bank details below to pay from your banking app.</p>
+          <div class="payment-details">
+            <div><span>Amount to pay</span><strong id="paymentAmount">—</strong></div>
+            <div><span>Account holder</span><strong id="paymentAccountHolder">Stichting Bharat Cultuur Friesland</strong></div>
+            <div><span>IBAN (ING)</span><strong id="paymentIban">—</strong></div>
+            <div><span>Payment reference</span><strong id="paymentReference">—</strong></div>
+          </div>
+          <p><strong>How to pay:</strong> Open your banking app, create a bank transfer to the IBAN above, enter the exact amount, and copy the payment reference exactly into the payment description. Your QR admission ticket will be emailed only after an organizer verifies the payment.</p>
+          <p class="payment-warning" id="paymentEmailNote">Check your inbox (and spam folder) for the payment instructions email.</p>
+          <a id="paymentLink" class="button primary" href="#" hidden>View payment instructions</a>
+        </div>
+
+        <div id="registrationTicket" class="ticket" hidden>
+          <div><small>QR admission ticket</small><strong>Registration confirmed</strong><p>Your QR ticket is also sent by email. Show it at the entrance.</p></div>
           <img id="ticketQr" alt="Registration QR ticket" width="180" height="180">
         </div>
+
         <div class="success-actions">
-          <a id="calendarLink" class="button secondary" target="_blank" rel="noopener">Add to Google Calendar</a>
+          <a id="calendarLink" class="button secondary" target="_blank" rel="noopener" hidden>Add to Google Calendar</a>
           <a id="whatsappLink" class="button green" target="_blank" rel="noopener" hidden>Join WhatsApp group</a>
-          <button class="button primary" type="button" onclick="window.print()">Print ticket</button>
+          <button id="printTicketButton" class="button primary" type="button" onclick="window.print()" hidden>Print ticket</button>
         </div>
       </section>
     </section>
@@ -175,7 +195,7 @@
     <aside class="sidebar">
       <section class="side-card brand-panel">
         <img src="assets/sbcf-logo.png" alt="SBCF logo">
-        <span class="eyebrow dark">STICHTING BHARAT CULTURE FRIESLAND</span>
+        <span class="eyebrow dark">STICHTING BHARAT CULTUUR FRIESLAND</span>
         <h3>Celebrating culture. Building community.</h3>
         <p>SBCF brings families together through cultural celebrations, performances and community activities.</p>
       </section>
@@ -192,7 +212,7 @@
     </aside>
   </main>
 
-  <footer class="footer"><div class="wrap"><div><strong>Stichting Bharat Culture Friesland (SBCF)</strong><small>Community • Culture • Togetherness</small></div><div class="footer-links"><a href="privacy.html">Privacy</a><a href="admin.html">Organizer dashboard</a><a href="checkin.html">Event check-in</a></div></div></footer>
+  <footer class="footer"><div class="wrap"><div><strong>Stichting Bharat Cultuur Friesland (SBCF)</strong><small>Community • Culture • Togetherness</small></div><div class="footer-links"><a href="privacy.html">Privacy</a><a href="admin.html">Organizer dashboard</a><a href="checkin.html">Event check-in</a></div></div></footer>
 
   <script src="config.js"></script>
   <script src="backend.js"></script>
