@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1b78">
+  <meta name="description" content="SBCF Diwali Celebration 2026 bank transfer instructions">
+  <title>SBCF — Diwali Payment Instructions</title>
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin-page">
+  <div class="brand-stripe"><span></span><span></span><span></span></div>
+  <header class="admin-header">
+    <div class="wrap admin-head-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/sbcf-logo.png" alt="SBCF logo">
+        <span class="brand-copy"><strong>Stichting Bharat Cultuur Friesland</strong><small>DIWALI 2026 PAYMENT INSTRUCTIONS</small></span>
+      </a>
+      <a class="button secondary compact" href="index.html">Event registration</a>
+    </div>
+  </header>
+  <main class="wrap prose">
+    <article class="card payment-page-card">
+      <span class="eyebrow dark">SBCF DIWALI CELEBRATION 2026</span>
+      <h1>Bank transfer instructions</h1>
+      <p>This page explains how to pay using your own banking app. It is not an online payment checkout, and opening this page does not transfer money.</p>
+      <div id="paymentPageMessage" class="message" role="status" aria-live="polite">Loading your payment details…</div>
+      <div id="paymentPageDetails" hidden>
+        <p id="paymentPageStatus" class="payment-warning"></p>
+        <div class="registration-id-box">
+          <small>REGISTRATION ID</small>
+          <strong id="paymentPageRegistration">—</strong>
+        </div>
+        <div id="paymentPageTransfer" class="payment-panel">
+          <h2>Transfer details</h2>
+          <div class="payment-details">
+            <div><span>Amount</span><strong id="paymentPageAmount">—</strong></div>
+            <div><span>Account holder</span><strong id="paymentPageHolder">—</strong></div>
+            <div><span>IBAN (ING)</span><strong id="paymentPageIban">—</strong><button type="button" class="copy-button" data-copy="paymentPageIban">Copy IBAN</button></div>
+            <div><span>Payment reference</span><strong id="paymentPageReference">—</strong><button type="button" class="copy-button" data-copy="paymentPageReference">Copy reference</button></div>
+          </div>
+          <h2>How to pay</h2>
+          <ol>
+            <li>Open your bank's app or online banking.</li>
+            <li>Start a new SEPA bank transfer to the IBAN above.</li>
+            <li>Enter the exact amount shown above.</li>
+            <li>Paste the payment reference exactly into the transfer description.</li>
+            <li>Review the beneficiary and submit the transfer in your banking app.</li>
+          </ol>
+          <p><strong>Already paid?</strong> Do not transfer a second time. An organizer will check the incoming payment. After verification, your QR admission ticket will be sent to the email address used at registration.</p>
+        </div>
+      </div>
+      <p id="paymentCopyStatus" class="message" role="status" aria-live="polite"></p>
+    </article>
+  </main>
+  <script src="backend.js"></script>
+  <script src="payment.js"></script>
+</body>
+</html>

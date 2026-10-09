@@ -20,3 +20,27 @@
 .participant-category{min-height:47px;display:flex;align-items:center;padding:12px 14px;border:1px solid #dfe3ec;border-radius:12px;background:#f8f9fc;color:var(--navy);font-weight:800}
 
 .optional-label{font-size:12px;color:var(--muted);font-weight:600}
+
+
+/* Payment confirmation and bank-transfer instructions */
+[hidden]{display:none!important}
+.registration-id-box{margin:20px auto;padding:15px 20px;border:1px solid #e3e8f3;background:#f7f8ff;border-radius:14px;max-width:680px;text-align:center}
+.registration-id-box small{display:block;font-size:12px;color:#637089;font-weight:800;letter-spacing:.08em}
+.registration-id-box strong{display:block;color:var(--navy);font-size:24px;letter-spacing:.02em;margin-top:6px;overflow-wrap:anywhere}
+.payment-panel{max-width:720px;margin:24px auto;padding:24px;border:1px solid #e1e6f0;background:#fff;border-radius:18px;text-align:left;box-shadow:0 8px 24px rgba(18,35,73,.05)}
+.payment-panel h3{font-size:24px;margin:0 0 10px;color:var(--navy)}
+.payment-panel h2{font-size:23px;margin:16px 0 12px;color:var(--navy)}
+.payment-panel p{line-height:1.65;color:#45516a}
+.payment-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+.payment-details>div{background:#f7f8fc;border:1px solid #e3e7f0;border-radius:12px;padding:13px 15px;min-width:0}
+.payment-details span{display:block;color:#637089;font-size:12px;font-weight:700;margin-bottom:5px}
+.payment-details strong{display:block;color:var(--navy);font-size:17px;overflow-wrap:anywhere;word-break:break-word}
+.payment-warning{background:#fff3e7;border:1px solid #ffd7b0;border-radius:12px;padding:12px 14px;color:#6f451d!important;font-weight:700}
+.payment-page-card{max-width:780px;margin:auto}
+.payment-page-card ol{padding-left:25px;line-height:1.9;color:#45516a}
+.payment-page-card .payment-panel{box-shadow:none}
+.copy-button{margin-top:10px;border:1px solid #b8c2dc;background:#fff;color:var(--navy);border-radius:8px;padding:6px 11px;font-weight:700;cursor:pointer}
+.copy-button:hover{background:#edf1ff}
+.row-actions button[data-action="confirm"]{background:#e8f5e9;border-color:#a8d4b0;color:#21633c}
+.row-actions button[data-action="confirm"]:hover{background:#d8f0dd}
+@media(max-width:700px){.payment-details{grid-template-columns:1fr}.payment-panel{padding:16px}.registration-id-box strong{font-size:20px}}

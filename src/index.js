@@ -2,7 +2,9 @@ const ALLOWED_ACTIONS = new Set([
   "ping",
   "register",
   "registrationStatus",
+  "paymentDetails",
   "adminDashboard",
+  "markPaymentPaid",
   "checkin",
   "resendEmail",
   "setRegistrationOpen"

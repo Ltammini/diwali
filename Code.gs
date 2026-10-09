@@ -212,29 +212,34 @@ function resendEmail_(registrationId){
 function markPaymentPaid_(payload){
   const registrationId=String(payload.registrationId||"").trim().toUpperCase();
   if(!registrationId)throw new Error("Registration ID is required.");
-  const sh=sheet_();
-  ensureHeaders_(sh);
-  const row=findRowById_(sh,registrationId);
-  if(!row)throw new Error("Registration not found.");
-  const current=rowObject_(sh,row);
-  const expected=money_(current.contribution);
-  if(expected<=0)return{registrationId,paymentStatus:"FREE",alreadyPaid:true};
+  const lock=LockService.getScriptLock();
+  lock.waitLock(20000);
+  try{
+    const sh=sheet_();
+    ensureHeaders_(sh);
+    const row=findRowById_(sh,registrationId);
+    if(!row)throw new Error("Registration not found.");
+    const current=rowObject_(sh,row);
+    const expected=money_(current.contribution);
+    if(expected<=0)return{registrationId,paymentStatus:"FREE",alreadyPaid:true,ticketEmailSent:current.ticketEmailStatus==="Sent"};
 
-  const received=payload.amountReceived===""||payload.amountReceived==null?expected:money_(payload.amountReceived);
-  if(Math.abs(received-expected)>0.009&&!payload.confirmDifference){
-    throw new Error(`Amount received (€${received.toFixed(2)}) does not match amount due (€${expected.toFixed(2)}). Confirm the difference before marking as paid.`);
+    const received=payload.amountReceived===""||payload.amountReceived==null?expected:money_(payload.amountReceived);
+    if(Math.abs(received-expected)>0.009&&!payload.confirmDifference){
+      throw new Error(`Amount received (€${received.toFixed(2)}) does not match amount due (€${expected.toFixed(2)}). Confirm the difference before marking as paid.`);
+    }
+
+    const result=verifyPaymentRow_(sh,row,{
+      amountReceived:received,
+      verification:"Manual",
+      transactionId:clean_(payload.transactionId,160),
+      transactionDate:clean_(payload.transactionDate,80),
+      note:clean_(payload.note||"Manually verified against the ING bank account by an organizer.",500)
+    });
+    return Object.assign({registrationId},result);
+  }finally{
+    lock.releaseLock();
   }
-
-  const result=verifyPaymentRow_(sh,row,{
-    amountReceived:received,
-    verification:"Manual",
-    transactionId:clean_(payload.transactionId,160),
-    transactionDate:clean_(payload.transactionDate,80),
-    note:clean_(payload.note||"Manually verified by organizer.",500)
-  });
-  return Object.assign({registrationId},result);
 }
-
 function reconcilePayments_(payload){
   const fileName=clean_(payload.fileName||"ING transaction export",180);
   const content=String(payload.content||"");
@@ -489,7 +494,16 @@ function extractTransactionDate_(block){
 function validateRegistration_(d){if(!String(d.clientRequestId||"").trim())throw new Error("Missing request ID.");if(!String(d.fullName||"").trim())throw new Error("Full name is required.");if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(d.email||"").trim()))throw new Error("A valid email address is required.");const expected=num_(d.regular12plus)+num_(d.under12)+num_(d.students),total=num_(d.totalAttendees);if(total!==expected)throw new Error("Attendee category totals do not match.");if(total<1||total>SETTINGS.maxAttendees)throw new Error(`Attendees must be between 1 and ${SETTINGS.maxAttendees}.`);if(!d.consent)throw new Error("Consent is required.");if(!Array.isArray(d.participants)||d.participants.length!==total)throw new Error("Participant details do not match the attendee count.");const counts={"Age 12+":0,"Below 12":0,"Student":0};d.participants.forEach(p=>{if(!String(p.name||"").trim())throw new Error("Each participant needs a name.");const type=String(p.type||"");if(!(type in counts))throw new Error("Invalid registration category.");counts[type]++;});if(counts["Age 12+"]!==num_(d.regular12plus)||counts["Below 12"]!==num_(d.under12)||counts["Student"]!==num_(d.students))throw new Error("Participant categories do not match the selected totals.");const expectedContribution=num_(d.regular12plus)*SETTINGS.feeRegular12Plus+num_(d.under12)*SETTINGS.feeUnder12+num_(d.students)*SETTINGS.feeStudent;if(money_(d.contributionAmount)!==money_(expectedContribution))throw new Error("Contribution amount does not match the selected categories.");}
 function requireAdmin_(payload){const key=PropertiesService.getScriptProperties().getProperty("ADMIN_KEY");if(!key)throw new Error("ADMIN_KEY is not configured in Apps Script Script Properties.");if(String(payload.adminKey||"")!==key)throw new Error("Incorrect admin key.");}
 function sheet_(){const ss=SpreadsheetApp.getActiveSpreadsheet();if(!ss)throw new Error("Create this Apps Script from inside the Google Sheet.");return ss.getSheetByName(SETTINGS.sheetName)||ss.insertSheet(SETTINGS.sheetName);}
-function ensureHeaders_(sh){if(sh.getLastRow()===0){sh.appendRow(HEADERS);return;}const cur=sh.getRange(1,1,1,Math.max(sh.getLastColumn(),HEADERS.length)).getValues()[0];HEADERS.forEach((h,i)=>{if(cur[i]!==h)sh.getRange(1,i+1).setValue(h);});}
+function ensureHeaders_(sh){
+  const required=HEADERS.length;
+  const available=sh.getMaxColumns();
+  if(available<required)sh.insertColumnsAfter(available,required-available);
+  if(sh.getLastRow()===0){sh.appendRow(HEADERS);return;}
+  const current=sh.getRange(1,1,1,required).getValues()[0];
+  HEADERS.forEach((header,index)=>{
+    if(current[index]!==header)sh.getRange(1,index+1).setValue(header);
+  });
+}
 function col_(header){const i=HEADERS.indexOf(header);if(i<0)throw new Error(`Unknown column: ${header}`);return i+1;}
 function makeRegistrationId_(){return `SBCF-26-${Utilities.getUuid().replace(/-/g,"").slice(0,6).toUpperCase()}`;}
 function findRowById_(sh,id){if(sh.getLastRow()<2)return 0;const vals=sh.getRange(2,col_("Registration ID"),sh.getLastRow()-1,1).getDisplayValues().flat();const i=vals.findIndex(v=>String(v).toUpperCase()===String(id).toUpperCase());return i<0?0:i+2;}

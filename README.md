@@ -1,33 +1,29 @@
-# SBCF Diwali 2026 — v5 reliable backend
+# SBCF Diwali 2026 — registration and manual bank-payment verification
 
-This version removes the browser → Google Apps Script iframe transport completely.
+Website: https://diwali.sbcf-friesland.workers.dev/
 
-Architecture:
+The organization is **Stichting Bharat Cultuur Friesland (SBCF)**.
 
-Browser
-→ same-origin `/api/backend`
-→ Cloudflare Worker
-→ Google Apps Script Web App
-→ Google Sheet / confirmation email
+## Workflow
 
-This avoids the iframe/CORS/postMessage failure that caused the browser to report a timeout even when Google Sheets and email succeeded.
+1. A guest registers on the website.
+2. For paid registrations (age 12+: €20, student: €15, below 12: free), Google Apps Script saves the registration as **PENDING** and emails the bank transfer amount, ING IBAN, account holder, exact payment reference and a link to /payment.html.
+3. The website immediately shows the same bank transfer details and explains that the QR ticket will follow after verification. **No QR is shown for pending payments.**
+4. An organizer verifies the incoming payment in ING, opens /admin.html and clicks **Confirm payment** for the correct registration. This action is protected by ADMIN_KEY.
+5. Google Apps Script marks the registration **PAID**, records manual verification in Google Sheets and emails the QR admission ticket. Repeated confirmation does not send a second ticket if already sent.
+6. Registrations costing €0 are **FREE** and receive a QR ticket immediately. The entrance check-in refuses pending payments.
 
-## Current registration prices
+The /payment.html link is a **bank transfer instruction page**, not a payment processor. No bank transfer is initiated by the website.
 
-- Age 12+ — €20
-- Student — €15
-- Below 12 — free
+**ING CSV/MT940 auto-import is not enabled in this release.** The existing backend draft importer is not exposed through the Cloudflare Worker because it requires validation against real ING statement formats before safe automatic matching.
 
-Phone number is optional.
+## Architecture
 
-There is no payment page or Mollie integration in this version.
+Browser → same-origin Cloudflare Worker /api/backend → Google Apps Script → Google Sheet and MailApp.
 
-## Important files
+- public/ — frontend pages and scripts
+- src/index.js — Cloudflare Worker proxy and action allowlist
+- Code.gs — Google Apps Script backend and email templates
+- DEPLOYMENT.md — required settings, rollout and test checklist
 
-- `public/` — website files served by Cloudflare
-- `src/index.js` — Cloudflare Worker API proxy
-- `Code.gs` — Google Apps Script backend
-- `wrangler.jsonc` — Cloudflare Worker + static assets configuration
-- `DEPLOYMENT.md` — exact deployment steps
-
-The Google Apps Script URL is no longer stored in browser JavaScript. It is configured as `APPS_SCRIPT_URL` in Cloudflare Worker Variables and Secrets.
+Never put ADMIN_KEY or APPS_SCRIPT_URL into public frontend files.
