@@ -89,6 +89,8 @@ async function loadDashboard() {
     $("mStudents").textContent = summary.students || 0;
     $("mUnder12").textContent = summary.under12 || 0;
     $("mContribution").textContent = fmtMoney(summary.contributionTotal || 0);
+    $("mDonations").textContent = fmtMoney(summary.donationTotal || 0);
+    $("mDonationsReceived").textContent = fmtMoney(summary.donationReceived || 0);
     $("mPaid").textContent = summary.paid || 0;
     $("mPending").textContent = summary.pending || 0;
     $("mReview").textContent = summary.review || 0;
@@ -129,9 +131,9 @@ function renderRows() {
     return '<tr>' +
       '<td><strong>' + id + '</strong><small>' + fmtDate(row.submittedAt) + '</small></td>' +
       '<td><strong>' + escapeHtml(row.fullName) + '</strong><small>' + escapeHtml(row.email) + '<br>' + escapeHtml(row.phone) + '</small></td>' +
-      '<td><strong>' + Number(row.totalAttendees || 0) + '</strong><small>' + Number(row.regular12plus || 0) + ' × 12+ • ' + Number(row.students || 0) + ' student • ' + Number(row.under12 || 0) + ' &lt;12<br>' + fmtMoney(row.contribution) + '</small></td>' +
+      '<td><strong>' + Number(row.totalAttendees || 0) + '</strong><small>' + Number(row.regular12plus || 0) + ' × 12+ • ' + Number(row.students || 0) + ' student • ' + Number(row.under12 || 0) + ' &lt;12<br>' + fmtMoney(row.contribution) + (Number(row.donationAmount||0)>0?' (includes '+fmtMoney(row.donationAmount)+' donation)':'') + '</small></td>' +
       '<td>' + escapeHtml(row.activities || "Just attending") + '</td>' +
-      '<td><span class="status ' + paymentClass + '">' + escapeHtml(status) + '</span><small>Reference: ' + escapeHtml(row.paymentReference || row.registrationId) + '<br>Due: ' + fmtMoney(row.contribution) + '</small></td>' +
+      '<td><span class="status ' + paymentClass + '">' + escapeHtml(status) + '</span><small>Reference: ' + escapeHtml(row.paymentReference || row.registrationId) + '<br>Due: ' + fmtMoney(row.contribution) + (Number(row.donationAmount||0)>0?'<br>Donation: '+fmtMoney(row.donationAmount):'') + '</small></td>' +
       '<td><span class="status ' + (row.emailStatus === "Sent" ? "ok" : "warn") + '">' + escapeHtml(row.emailStatus || "—") + '</span><small>QR ticket email: ' + escapeHtml(row.ticketEmailStatus || "—") + '</small></td>' +
       '<td><span class="status ' + (row.checkInStatus === "Checked in" ? "ok" : "neutral") + '">' + escapeHtml(row.checkInStatus || "Not checked in") + '</span>' + (row.checkedInAt ? '<small>' + fmtDate(row.checkedInAt) + '</small>' : "") + '</td>' +
       '<td><div class="row-actions">' + confirmButton +
@@ -215,9 +217,9 @@ async function toggleRegistration() {
 }
 
 function exportCsv() {
-  const headers = ["Registration ID","Submitted At","Full Name","Email","Phone","Age 12+","Below 12","Students","Total","Contribution","Payment Status","Payment Reference","Amount Received","Payment Verification","Payment Verified At","Ticket Email Status","Activities","Notes","Email Status","Check-in Status","Checked In At"];
+  const headers = ["Registration ID","Submitted At","Full Name","Email","Phone","Age 12+","Below 12","Students","Total","Contribution","Donation","Payment Status","Payment Reference","Amount Received","Payment Verification","Payment Verified At","Ticket Email Status","Activities","Notes","Email Status","Check-in Status","Checked In At"];
   const values = registrations.map(row => [
-    row.registrationId,row.submittedAt,row.fullName,row.email,row.phone,row.regular12plus,row.under12,row.students,row.totalAttendees,row.contribution,paymentStatus(row),row.paymentReference||row.registrationId,row.amountReceived,row.paymentVerification,row.paymentVerifiedAt,row.ticketEmailStatus,row.activities,row.notes,row.emailStatus,row.checkInStatus,row.checkedInAt
+    row.registrationId,row.submittedAt,row.fullName,row.email,row.phone,row.regular12plus,row.under12,row.students,row.totalAttendees,row.contribution,row.donationAmount||0,paymentStatus(row),row.paymentReference||row.registrationId,row.amountReceived,row.paymentVerification,row.paymentVerifiedAt,row.ticketEmailStatus,row.activities,row.notes,row.emailStatus,row.checkInStatus,row.checkedInAt
   ]);
   const csv = [headers,...values].map(row => row.map(value => '"' + String(value == null ? "" : value).replaceAll('"','""') + '"').join(",")).join("\n");
   const link = document.createElement("a");
