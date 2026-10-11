@@ -17,7 +17,7 @@ const SETTINGS={
   replyTo:"",whatsappUrl:"",qrBaseUrl:"https://quickchart.io/qr?size=240&margin=2&text=",
   feeRegular12Plus:20,feeUnder12:0,feeStudent:15,currency:"EUR",paymentAccountHolder:"Stichting Bharat Cultuur Friesland",paymentSiteUrl:"https://diwali.sbcf-friesland.workers.dev",paymentFileMaxChars:2000000
 };
-const HEADERS=["Submitted At","Registration ID","Request ID","Full Name","Email","Phone","Age 12+","Below 12","Students","Total Attendees","Contribution","Currency","Participants","Activities","Notes","Consent","Status","Email Status","Email Sent At","Check-in Status","Checked In At","Source URL","Payment Status","Payment Reference","Payment Token","Amount Received","Payment Verification","Bank Transaction ID","Bank Transaction Date","Payment Verified At","Payment Note","Ticket Email Status","Ticket Email Sent At"];
+const HEADERS=["Submitted At","Registration ID","Request ID","Full Name","Email","Phone","Age 12+","Below 12","Students","Total Attendees","Contribution","Currency","Participants","Activities","Notes","Consent","Status","Email Status","Email Sent At","Check-in Status","Checked In At","Source URL","Payment Status","Payment Reference","Payment Token","Amount Received","Payment Verification","Bank Transaction ID","Bank Transaction Date","Payment Verified At","Payment Note","Ticket Email Status","Ticket Email Sent At","Donation"];
 
 function setupSheet(){const sh=sheet_();ensureHeaders_(sh);sh.setFrozenRows(1);sh.getRange(1,1,1,HEADERS.length).setFontWeight("bold").setBackground("#0b1b78").setFontColor("#ffffff");sh.autoResizeColumns(1,HEADERS.length);PropertiesService.getScriptProperties().setProperty("REGISTRATION_OPEN",String(SETTINGS.registrationOpenDefault));return "SBCF registration sheet is ready.";}
 function doGet(){
@@ -57,7 +57,9 @@ function register_(d){
   if(!registrationOpen_())throw new Error("Registration is currently closed. Please contact the SBCF event team.");
   if(String(d.website||"").trim())return{registrationId:"SBCF-SPAM",emailSent:false};
   validateRegistration_(d);
-  const calculatedContribution=num_(d.regular12plus)*SETTINGS.feeRegular12Plus+num_(d.under12)*SETTINGS.feeUnder12+num_(d.students)*SETTINGS.feeStudent;
+  const donation=donationAmount_(d.donationAmount);
+  const registrationFee=num_(d.regular12plus)*SETTINGS.feeRegular12Plus+num_(d.under12)*SETTINGS.feeUnder12+num_(d.students)*SETTINGS.feeStudent;
+  const calculatedContribution=money_(registrationFee+donation);
   if(calculatedContribution>0)requireBankDetails_();
 
   const lock=LockService.getScriptLock();
@@ -87,7 +89,7 @@ function register_(d){
       new Date(),registrationId,clean_(d.clientRequestId,120),clean_(d.fullName,120),clean_(d.email,160),clean_(d.phone,60),
       num_(d.regular12plus),num_(d.under12),num_(d.students),num_(d.totalAttendees),money_(calculatedContribution),SETTINGS.currency,
       participants,activities,clean_(d.notes,1500),d.consent?"Yes":"No",status,"Pending","","Not checked in","",clean_(d.sourceUrl,500),
-      paymentStatus,paymentReference,paymentToken,"","","","","","","Pending",""
+      paymentStatus,paymentReference,paymentToken,"","","","","","","Pending","",donation
     ];
 
     sh.appendRow(row);
@@ -155,7 +157,7 @@ function dashboard_(){
   const rows=allObjects_(sh).reverse();
   const summary={
     registrations:rows.length,attendees:0,regular12plus:0,under12:0,students:0,
-    activityRegistrations:0,checkedIn:0,contributionTotal:0,paidTotal:0,
+    activityRegistrations:0,checkedIn:0,contributionTotal:0,paidTotal:0,donationTotal:0,donationReceived:0,
     paid:0,pending:0,review:0,free:0
   };
   rows.forEach(r=>{
@@ -164,10 +166,11 @@ function dashboard_(){
     summary.under12+=num_(r.under12);
     summary.students+=num_(r.students);
     summary.contributionTotal+=Number(r.contribution||0);
+    summary.donationTotal+=Number(r.donationAmount||0);
     if(r.activities&&r.activities!=="Just attending")summary.activityRegistrations++;
     if(r.checkInStatus==="Checked in")summary.checkedIn+=num_(r.totalAttendees);
     const ps=paymentStatusOf_(r);
-    if(ps==="PAID"){summary.paid++;summary.paidTotal+=Number(r.amountReceived||r.contribution||0);}
+    if(ps==="PAID"){summary.paid++;summary.paidTotal+=Number(r.amountReceived||r.contribution||0);summary.donationReceived+=Number(r.donationAmount||0);}
     else if(ps==="PENDING")summary.pending++;
     else if(ps==="REVIEW")summary.review++;
     else if(ps==="FREE")summary.free++;
@@ -403,6 +406,8 @@ function paymentSummary_(r){
   return{
     status:paymentStatusOf_(r),
     amountDue:money_(r.contribution),
+    donationAmount:money_(r.donationAmount),
+    registrationFee:money_(Math.max(0,Number(r.contribution||0)-Number(r.donationAmount||0))),
     amountReceived:money_(r.amountReceived),
     currency:r.currency||SETTINGS.currency,
     reference:r.paymentReference||r.registrationId,
@@ -491,7 +496,16 @@ function extractTransactionDate_(block){
   const mt=text.match(/:61:(\d{2})(\d{2})(\d{2})/);
   return mt?`20${mt[1]}-${mt[2]}-${mt[3]}`:"";
 }
-function validateRegistration_(d){if(!String(d.clientRequestId||"").trim())throw new Error("Missing request ID.");if(!String(d.fullName||"").trim())throw new Error("Full name is required.");if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(d.email||"").trim()))throw new Error("A valid email address is required.");const expected=num_(d.regular12plus)+num_(d.under12)+num_(d.students),total=num_(d.totalAttendees);if(total!==expected)throw new Error("Attendee category totals do not match.");if(total<1||total>SETTINGS.maxAttendees)throw new Error(`Attendees must be between 1 and ${SETTINGS.maxAttendees}.`);if(!d.consent)throw new Error("Consent is required.");if(!Array.isArray(d.participants)||d.participants.length!==total)throw new Error("Participant details do not match the attendee count.");const counts={"Age 12+":0,"Below 12":0,"Student":0};d.participants.forEach(p=>{if(!String(p.name||"").trim())throw new Error("Each participant needs a name.");const type=String(p.type||"");if(!(type in counts))throw new Error("Invalid registration category.");counts[type]++;});if(counts["Age 12+"]!==num_(d.regular12plus)||counts["Below 12"]!==num_(d.under12)||counts["Student"]!==num_(d.students))throw new Error("Participant categories do not match the selected totals.");const expectedContribution=num_(d.regular12plus)*SETTINGS.feeRegular12Plus+num_(d.under12)*SETTINGS.feeUnder12+num_(d.students)*SETTINGS.feeStudent;if(money_(d.contributionAmount)!==money_(expectedContribution))throw new Error("Contribution amount does not match the selected categories.");}
+function validateRegistration_(d){if(!String(d.clientRequestId||"").trim())throw new Error("Missing request ID.");if(!String(d.fullName||"").trim())throw new Error("Full name is required.");if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(d.email||"").trim()))throw new Error("A valid email address is required.");const expected=num_(d.regular12plus)+num_(d.under12)+num_(d.students),total=num_(d.totalAttendees);if(total!==expected)throw new Error("Attendee category totals do not match.");if(total<1||total>SETTINGS.maxAttendees)throw new Error(`Attendees must be between 1 and ${SETTINGS.maxAttendees}.`);if(!d.consent)throw new Error("Consent is required.");if(!Array.isArray(d.participants)||d.participants.length!==total)throw new Error("Participant details do not match the attendee count.");const counts={"Age 12+":0,"Below 12":0,"Student":0};d.participants.forEach(p=>{if(!String(p.name||"").trim())throw new Error("Each participant needs a name.");const type=String(p.type||"");if(!(type in counts))throw new Error("Invalid registration category.");counts[type]++;});if(counts["Age 12+"]!==num_(d.regular12plus)||counts["Below 12"]!==num_(d.under12)||counts["Student"]!==num_(d.students))throw new Error("Participant categories do not match the selected totals.");const expectedContribution=num_(d.regular12plus)*SETTINGS.feeRegular12Plus+num_(d.under12)*SETTINGS.feeUnder12+num_(d.students)*SETTINGS.feeStudent+donationAmount_(d.donationAmount);if(money_(d.contributionAmount)!==money_(expectedContribution))throw new Error("Total amount does not match the registration fees plus donation.");}
+// Donation is optional, but the server validates every amount and never trusts client totals.
+function donationAmount_(value){
+  if(value===null||value===undefined||value==="")return 0;
+  const raw=String(value).trim();
+  if(!/^(?:0|[1-9]\d{0,4})(?:\.\d{1,2})?$/.test(raw))throw new Error("Donation must be a valid euro amount with at most two decimal places.");
+  const amount=Number(raw);
+  if(!Number.isFinite(amount)||amount<0||amount>10000)throw new Error("Donation must be between €0 and €10,000.");
+  return Math.round(amount*100)/100;
+}
 function requireAdmin_(payload){const key=PropertiesService.getScriptProperties().getProperty("ADMIN_KEY");if(!key)throw new Error("ADMIN_KEY is not configured in Apps Script Script Properties.");if(String(payload.adminKey||"")!==key)throw new Error("Incorrect admin key.");}
 function sheet_(){const ss=SpreadsheetApp.getActiveSpreadsheet();if(!ss)throw new Error("Create this Apps Script from inside the Google Sheet.");return ss.getSheetByName(SETTINGS.sheetName)||ss.insertSheet(SETTINGS.sheetName);}
 function ensureHeaders_(sh){
@@ -528,6 +542,7 @@ function objectFromRow_(v){
     students:num_(field_(v,"Students")),
     totalAttendees:num_(field_(v,"Total Attendees")),
     contribution:Number(field_(v,"Contribution")||0),
+    donationAmount:Number(field_(v,"Donation")||0),
     currency:String(field_(v,"Currency")||""),
     participants:String(field_(v,"Participants")||""),
     activities:String(field_(v,"Activities")||""),
