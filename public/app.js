@@ -16,7 +16,10 @@ function initBrand(){
 }
 
 function totalAttendees(){return state.regular12plus+state.under12+state.students;}
-function contributionAmount(){return state.regular12plus*cfg.feeRegular12Plus+state.under12*cfg.feeUnder12+state.students*cfg.feeStudent;}
+function registrationFeeAmount(){return state.regular12plus*cfg.feeRegular12Plus+state.under12*cfg.feeUnder12+state.students*cfg.feeStudent;}
+function donationAmount(){return Math.round(Number($("donationAmount").value||0)*100)/100;}
+function contributionAmount(){return Math.round((registrationFeeAmount()+donationAmount())*100)/100;}
+function validateDonation(){return $("donationAmount").reportValidity();}
 function currency(amount){return new Intl.NumberFormat("en-NL",{style:"currency",currency:cfg.currency}).format(amount);}
 function scrollToForm(){$("registration").scrollIntoView({behavior:"smooth",block:"start"});}
 $("heroRegisterButton").addEventListener("click",scrollToForm);
@@ -38,7 +41,7 @@ qsa("[data-next]").forEach(btn=>btn.addEventListener("click",()=>{
 }));
 qsa("[data-back]").forEach(btn=>btn.addEventListener("click",()=>showStep(Number(btn.dataset.back))));
 
-function validateContact(){for(const id of ["fullName","email"]){if(!$(id).reportValidity())return false;}return true;}
+function validateContact(){for(const id of ["fullName","email"]){if(!$(id).reportValidity())return false;}return validateDonation();}
 function validateParticipants(){saveParticipantCache();for(const el of qsa(".participant-name")){if(!el.value.trim()){el.setCustomValidity("Please enter a participant name.");el.reportValidity();el.setCustomValidity("");return false;}}return true;}
 
 qsa("[data-counter]").forEach(btn=>btn.addEventListener("click",()=>{
@@ -52,7 +55,21 @@ qsa("[data-counter]").forEach(btn=>btn.addEventListener("click",()=>{
   updateContribution();
 }));
 
-function updateContribution(){$("contributionPreview").textContent=currency(contributionAmount());}
+function updateContribution(){
+  const valid=$("donationAmount").validity.valid;
+  $("contributionPreview").textContent=valid?currency(contributionAmount()):"Check donation amount";
+  $("donationThankYou").hidden=!valid||donationAmount()<=0;
+  qsa("[data-donation]").forEach(button=>{
+    const selected=valid&&Number(button.dataset.donation)===donationAmount();
+    button.classList.toggle("selected",selected);
+    button.setAttribute("aria-pressed",String(selected));
+  });
+}
+$("donationAmount").addEventListener("input",updateContribution);
+qsa("[data-donation]").forEach(button=>button.addEventListener("click",()=>{
+  $("donationAmount").value=Number(button.dataset.donation)===0?"":button.dataset.donation;
+  updateContribution();
+}));
 
 function saveParticipantCache(){
   const rows=qsa(".participant-row");
@@ -83,7 +100,9 @@ function renderSummary(){
     <div class="summary-row"><span>Categories</span><strong>${state.regular12plus} × 12+ · ${state.students} × student · ${state.under12} × below 12</strong></div>
     <div class="summary-row"><span>Participants</span><strong>${participants.map(p=>`${escapeHtml(p.name)} (${escapeHtml(p.type)})`).join(", ")}</strong></div>
     <div class="summary-row"><span>Activities</span><strong>${acts.length?acts.map(escapeHtml).join(", "):"Just attending"}</strong></div>
-    <div class="summary-row highlight"><span>Total contribution</span><strong>${currency(contributionAmount())}</strong></div>`;
+    <div class="summary-row"><span>Registration fees</span><strong>${currency(registrationFeeAmount())}</strong></div>
+    <div class="summary-row"><span>Optional donation</span><strong>${currency(donationAmount())}</strong></div>
+    <div class="summary-row highlight"><span>Total to transfer</span><strong>${currency(contributionAmount())}</strong></div>`;
 }
 
 function buildCalendarUrl(){
@@ -109,6 +128,9 @@ function showRegistrationSuccess(result, payload) {
 
   $("registrationId").textContent = result.registrationId;
   $("paymentPanel").hidden = !needsPayment;
+  const pledgedDonation = Number(payment.donationAmount ?? payload.donationAmount ?? 0);
+  $("paymentDonationRow").hidden = pledgedDonation <= 0;
+  $("paymentDonationAmount").textContent = currency(pledgedDonation);
   $("registrationTicket").hidden = !hasTicket;
   $("printTicketButton").hidden = !hasTicket;
 
@@ -127,7 +149,9 @@ function showRegistrationSuccess(result, payload) {
     $("ticketQr").removeAttribute("src");
     $("successEyebrow").textContent = "REGISTRATION RECEIVED — PAYMENT PENDING";
     $("successHeading").textContent = "Registration received!";
-    $("successText").textContent = "We have saved your registration. Payment must be verified before your admission ticket is issued.";
+    $("successText").textContent = "We have saved your registration. " +
+      (pledgedDonation > 0 ? "Thank you for your optional donation of " + currency(pledgedDonation) + "! " : "") +
+      "Please transfer the total shown below. Your admission ticket will be issued after payment verification.";
     $("paymentAmount").textContent = currency(amountDue);
     $("paymentAccountHolder").textContent = payment.accountHolder || cfg.organizerName;
     $("paymentIban").textContent = payment.iban || "Please refer to your payment email";
@@ -158,6 +182,7 @@ function showRegistrationSuccess(result, payload) {
 $("registrationForm").addEventListener("submit", async e => {
   e.preventDefault();
 
+  if (!validateContact()) { showStep(1); return; }
   if (!$("consent").checked) {
     $("consent").reportValidity();
     return;
@@ -188,6 +213,7 @@ $("registrationForm").addEventListener("submit", async e => {
     students: state.students,
     totalAttendees: totalAttendees(),
     contributionAmount: contributionAmount(),
+    donationAmount: donationAmount(),
     currency: cfg.currency,
     participants: getParticipants(),
     activities: getActivities(),
