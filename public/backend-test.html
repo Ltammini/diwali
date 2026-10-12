@@ -12,6 +12,7 @@
     <section class="card" style="padding:28px">
       <h1 style="margin-top:0">SBCF backend connection test</h1>
       <p>This page tests Browser → Cloudflare Worker → Google Apps Script. It does not create a registration.</p>
+      <p><strong>Note:</strong> A successful connection test does not prove the deployed Apps Script is up to date. If registration fails after a GitHub merge, redeploy the latest <code>Code.gs</code> as a new production Web App version and check the production <code>PAYMENT_IBAN</code> Script Property and Cloudflare <code>APPS_SCRIPT_URL</code>.</p>
       <button class="button primary" id="testButton" type="button">Test connection</button>
       <div id="result" class="message" style="margin-top:18px"></div>
     </section>

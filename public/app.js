@@ -223,32 +223,50 @@ $("registrationForm").addEventListener("submit", async e => {
     sourceUrl: location.href
   };
 
+  let result = null;
+  let registrationError = null;
   try {
-    const result = await backendRequest("register", payload, 60000);
-    showRegistrationSuccess(result, payload);
+    result = await backendRequest("register", payload, 60000);
   } catch (err) {
-    // The server may already have saved the registration and sent the email
-    // even if the browser did not receive the Apps Script response.
+    registrationError = err;
+    console.error("Registration backend request failed:", err);
+  }
+
+  // A timed-out request may still have been saved by Google Apps Script.
+  // Keep the same clientRequestId so any retry is idempotent.
+  if (!result) {
+    msg.textContent = "Checking whether your registration was completed…";
     try {
-      msg.textContent = "Checking whether your registration was completed…";
-      msg.className = "message";
-
       const recovered = await recoverRegistration(clientRequestId);
-
-      if (recovered?.found && recovered.registrationId) {
-        showRegistrationSuccess(recovered, payload);
-        return;
-      }
+      if (recovered?.found && recovered.registrationId) result = recovered;
     } catch (recoveryError) {
       console.warn("Registration recovery check failed:", recoveryError);
     }
-
-    msg.textContent =
-      "We could not confirm the registration response. Please check your email before submitting again. If no confirmation arrives, try once more.";
-    msg.className = "message error";
-    button.disabled = false;
-    button.textContent = "Confirm registration";
   }
+
+  if (result) {
+    try {
+      showRegistrationSuccess(result, payload);
+    } catch (displayError) {
+      // Never suggest resubmitting after the server has confirmed a registration.
+      console.error("Registration accepted, but the confirmation page failed:", displayError);
+      msg.textContent = "Your registration was received, but we could not display the confirmation page. Please check your email or contact the organizer with your registration ID: " + (result.registrationId || "not available") + ".";
+      msg.className = "message error";
+      button.disabled = true;
+      button.textContent = "Registration received";
+    }
+    return;
+  }
+
+  // Preserve the actual backend error for diagnosis instead of always replacing
+  // it with a generic message. No credentials or submitted personal data are logged.
+  const reason = String(registrationError?.message || "The registration service did not respond.")
+    .replace(/\s+/g, " ").slice(0, 260);
+  msg.textContent = "Registration could not be confirmed: " + reason +
+    " Please check your email and contact the organizer before submitting again.";
+  msg.className = "message error";
+  button.disabled = false;
+  button.textContent = "Confirm registration";
 });
 
 initBrand();
