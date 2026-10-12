@@ -9,6 +9,7 @@
  * Optional Script Properties:
  *   PAYMENT_ACCOUNT_HOLDER = defaults to Stichting Bharat Cultuur Friesland
  *   PAYMENT_SITE_URL = defaults to https://diwali.sbcf-friesland.workers.dev
+ *
  */
 const SETTINGS={
   sheetName:"Registrations",registrationOpenDefault:true,maxAttendees:30,
