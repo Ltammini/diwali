@@ -21,6 +21,11 @@ async function showPaymentInstructions() {
     const status = String(payment.status || "").toUpperCase();
     $("paymentPageRegistration").textContent = response.registrationId;
     $("paymentPageAmount").textContent = formatEuro(payment.amountDue);
+    const donation = Number(payment.donationAmount || 0);
+    $("paymentPageFeeRow").hidden = donation <= 0;
+    $("paymentPageDonationRow").hidden = donation <= 0;
+    $("paymentPageFee").textContent = formatEuro(payment.registrationFee);
+    $("paymentPageDonation").textContent = formatEuro(donation);
     $("paymentPageHolder").textContent = payment.accountHolder || "Stichting Bharat Cultuur Friesland";
     $("paymentPageIban").textContent = payment.iban || "Not configured";
     $("paymentPageReference").textContent = payment.reference || registrationId;

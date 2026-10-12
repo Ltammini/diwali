@@ -44,3 +44,13 @@
 .row-actions button[data-action="confirm"]{background:#e8f5e9;border-color:#a8d4b0;color:#21633c}
 .row-actions button[data-action="confirm"]:hover{background:#d8f0dd}
 @media(max-width:700px){.payment-details{grid-template-columns:1fr}.payment-panel{padding:16px}.registration-id-box strong{font-size:20px}}
+
+/* Optional donations — separate from registration fees. */
+.donation-panel{margin:20px 0;padding:20px;border:1px solid #f4d5a6;border-radius:16px;background:linear-gradient(135deg,#fffaf0,#fff)}
+.donation-panel .section-title{margin-bottom:12px}
+.donation-panel .field{margin-top:14px}
+.donation-panel .field small{display:block;color:var(--muted);font-size:12px;margin-top:5px}
+.donation-presets{display:flex;gap:8px;flex-wrap:wrap}
+.donation-presets button{background:#fff;border:1px solid #d6c9b4;border-radius:10px;padding:10px 14px;font-weight:750;color:var(--navy);cursor:pointer}
+.donation-presets button:hover,.donation-presets button.selected{background:#fff0d8;border-color:var(--saffron);color:#8b4600}
+.donation-thanks{margin:12px 0 0;color:#267238;font-weight:700;font-size:13px}

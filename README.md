@@ -27,3 +27,7 @@ Browser → same-origin Cloudflare Worker /api/backend → Google Apps Script �
 - DEPLOYMENT.md — required settings, rollout and test checklist
 
 Never put ADMIN_KEY or APPS_SCRIPT_URL into public frontend files.
+
+## Optional donations (feature branch)
+
+Attendees can add an optional donation to their registration. The total bank transfer includes the registration fees plus the donation. The backend stores donations separately, validates the total and thanks donors by amount in the payment and verified ticket emails. See [DONATIONS.md](DONATIONS.md) for the staging setup, safe deployment order and acceptance checklist.
