@@ -2,6 +2,7 @@
  * SBCF Diwali Registration 2026 — Google Apps Script backend
  * Attach this script to the Google Sheet that will hold registrations.
  *
+ *
  * Script Properties required:
  *   ADMIN_KEY = a long organizer-only password
  *   PAYMENT_IBAN = SBCF ING IBAN (spaces are optional)
